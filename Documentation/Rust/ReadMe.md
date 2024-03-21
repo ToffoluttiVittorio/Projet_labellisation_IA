@@ -30,3 +30,15 @@ http://localhost:5173/
 avoir un .tif :
 https://visibleearth.nasa.gov/images/57752/blue-marble-land-surface-shallow-water-and-shaded-topography
 image de 2 MB = 10s
+
+## Compréhension
+
+-> dans src/, on y trouve les fichiers écrits en Rust (.rs) (pour l'instant, pas nécessaire de comprendre)
+-> build l'application produit le code javascript qui réalise la segmentation, visible dans pkg/
+-> le front example/ utilise ensuite ces fonctions et montre le résultat segmenté dans le canvas
+
+
+
+
+
+
