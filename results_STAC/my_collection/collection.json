@@ -1,0 +1,44 @@
+{
+  "type": "Collection",
+  "id": "my_collection",
+  "stac_version": "1.0.0",
+  "description": "My Collection",
+  "links": [
+    {
+      "rel": "root",
+      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/results/catalog.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "item",
+      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/results/my_collection/s4_12710_6725_20060726_m20_1_lcc00_cog.tif/s4_12710_6725_20060726_m20_1_lcc00_cog.tif.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "parent",
+      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/results/catalog.json",
+      "type": "application/json"
+    }
+  ],
+  "extent": {
+    "spatial": {
+      "bbox": [
+        [
+          -180,
+          -90,
+          180,
+          90
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          null,
+          null
+        ]
+      ]
+    }
+  },
+  "license": "proprietary"
+}

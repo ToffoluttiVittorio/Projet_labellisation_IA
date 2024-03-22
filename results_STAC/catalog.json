@@ -1,0 +1,23 @@
+{
+  "type": "Catalog",
+  "id": "my_catalog",
+  "stac_version": "1.0.0",
+  "description": "My STAC Catalog",
+  "links": [
+    {
+      "rel": "root",
+      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/results/catalog.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "child",
+      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/results/my_collection/collection.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "self",
+      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/results/catalog.json",
+      "type": "application/json"
+    }
+  ]
+}
