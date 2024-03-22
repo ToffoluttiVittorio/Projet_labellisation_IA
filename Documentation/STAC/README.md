@@ -8,8 +8,9 @@ STAC permet en effet de créer des collections d'images (ou de tout autre type d
 ## Métadonnées :
 Il fournit un moyen standardisé de décrire ces collections, y compris les métadonnées associées telles que la date, le lieu, la résolution, etc.
 
-## Facilite l'exploration
+## Facilite l'exploration : 
 STAC facilite la découverte, l'accès et l'exploitation de ces données en les organisant de manière standardisée et en fournissant des liens vers les données elles-mêmes.
+
 ## Bibliographie
 
     - https://pro.arcgis.com/fr/pro-app/latest/help/data/imagery/introduction-to-stac.htm
