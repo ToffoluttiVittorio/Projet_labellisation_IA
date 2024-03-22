@@ -36,3 +36,13 @@ Cet algorithme exécute simplement la méthode K-means dans l'espace 5d des info
 
 
 ![Capture d’écran du 2024-03-22 13-51-47](https://github.com/ToffoluttiVittorio/Projet_labellisation_IA/assets/61098254/e98fca9e-1404-4832-a999-85b48ee7e2a7)
+
+## Résultat des segmentations
+
+| Nom Segmentation | Nombre de Segments | Temps (s) | Paramètres |
+|------------------|---------------------|------------|------------|
+| Felzenszwalb     | 1110                | 2.98       | Scale=100, Sigma=0.5, Min_size=50 |
+| SLIC             | 200                 | 1.93       | N_segments=250, Compactness=10, Sigma=1 |
+| Quickshift       | 12186               | 11.59      | Kernel_size=3, Max_dist=6, Ratio=0.5 |
+| Watershed        | 240                 | 1.26       | Markers=250, Compactness=0.001 |
+
