@@ -10,10 +10,8 @@ Les algorithmes sont présents dans la librairie python skimage.
 
 Cet algorithme rapide de segmentation d'images 2D, est populaire dans la communauté de la vision par ordinateur. L'algorithme possède un seul paramètre d'échelle qui influence la taille des segments. La taille réelle et le nombre de segments peuvent varier considérablement en fonction du contraste local.
 
-<p align="center">
 ![Capture d’écran du 2024-03-22 12-29-38](https://github.com/ToffoluttiVittorio/Projet_labellisation_IA/assets/61098254/99774f6b-1a8c-4807-8c3b-88ca680c5c99)
-</p>
-  
+
 ## Segmentation SLIC (K-means)
 
 Cet algorithme exécute simplement la méthode K-means dans l'espace 5d des informations sur les couleurs et l'emplacement de l'image et est donc étroitement lié à la méthode quickshift. La méthode de regroupement étant plus simple, elle est très efficace. Il est essentiel pour cet algorithme de travailler dans l'espace couleur Lab pour obtenir de bons résultats. L'algorithme a rapidement pris de l'ampleur et est aujourd'hui largement utilisé. Le paramètre de compacité permet d'arbitrer entre la similarité des couleurs et la proximité, comme dans le cas de Quickshift, tandis que n_segments choisit le nombre de centres pour kmeans.
