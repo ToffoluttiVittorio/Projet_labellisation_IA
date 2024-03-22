@@ -1,9 +1,15 @@
-# STAC (SpatioTemporal Asset Catalog) :
+# STAC : SpatioTemporal Asset Catalog
 
-    STAC permet en effet de créer des collections d'images (ou de tout autre type de données géospatiales) pour les organiser de manière cohérente.
-    Cela fournit un moyen standardisé de décrire ces collections, y compris les métadonnées associées telles que la date, le lieu, la résolution, etc.
-    STAC facilite la découverte, l'accès et l'exploitation de ces données en les organisant de manière standardisée et en fournissant des liens vers les données elles-mêmes.
+L'élément STAC est l'unité atomique de base, représentant un actif spatio-temporel unique sous la forme d'une caractéristique GeoJSON avec une date et des liens. Le catalogue STAC est un fichier JSON simple et flexible de liens qui fournit une structure pour organiser et parcourir les éléments STAC.
 
+## Collections d'images : 
+STAC permet en effet de créer des collections d'images (ou de tout autre type de données géospatiales) pour les organiser de manière cohérente.
+
+## Métadonnées :
+Il fournit un moyen standardisé de décrire ces collections, y compris les métadonnées associées telles que la date, le lieu, la résolution, etc.
+
+## Facilite l'exploration
+STAC facilite la découverte, l'accès et l'exploitation de ces données en les organisant de manière standardisée et en fournissant des liens vers les données elles-mêmes.
 ## Bibliographie
 
     - https://pro.arcgis.com/fr/pro-app/latest/help/data/imagery/introduction-to-stac.htm
