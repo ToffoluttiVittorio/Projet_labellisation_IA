@@ -2,6 +2,14 @@
 
 ### comment est appelé le calcul au sein du front ?
 
+au changement du fileSelector, appel de processFile
+première étape de processFile, tiff = await readFile() qui return dim, channels et les données merged en un Uint8Array
+ensuite, use des fonctions importées qui créent hierarchy, labels et bitmapResult
+et après, création de la nouvelle image segmentée avec ce dernier et dim de tif
+enfin, drawimage dans le canvas
+
+autre côté : setupSlider qui écoute l'input pour lancer handleSlider
+
 ![seg drawio](https://github.com/ToffoluttiVittorio/Projet_labellisation_IA/assets/121936719/7b9cf4d4-06a5-4889-9796-c3ec153f4a70)
 
 ## Compréhension
