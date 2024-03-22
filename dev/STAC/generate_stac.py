@@ -7,8 +7,9 @@ from shapely.geometry import box
 
 # Get the absolute path of the script's directory
 script_dir = os.path.dirname(os.path.abspath(__file__))
+print(script_dir)
 # Path to the folder containing the COGs
-cog_folder = os.path.join(script_dir, 'cog_img')
+cog_folder = os.path.join(script_dir, '../../data/cog_img')
 
 # Initialize the STAC catalog
 catalog = Catalog(id='my_catalog', description='My STAC Catalog')
