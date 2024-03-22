@@ -22,4 +22,27 @@ Pour obtenir la version la plus récente de GDAL run la commande suivante qui aj
 sudo add-apt-repository ppa:ubuntugis/ppa
 ```
 
+Puis update les sources du package : 
 
+```sh
+sudo apt-get update
+```
+
+Installer le package GDAL/OGR : 
+
+```sh
+sudo apt-get install gdal-bin
+```
+
+Installer la librairie de développement pour GDAL :
+
+```sh
+sudo apt-get install libgdal-dev
+```
+
+Exporter les deux variables PATH suivantes : 
+
+```sh
+export CPLUS_INCLUDE_PATH=/usr/include/gdal
+export C_INCLUDE_PATH=/usr/include/gdal
+``
