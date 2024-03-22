@@ -33,3 +33,6 @@ Quickshift a deux paramètres principaux : sigma contrôle l'échelle de l'appro
 ## Segmentation Watershed
 
 Cet algorithme exécute simplement la méthode K-means dans l'espace 5d des informations sur les couleurs et l'emplacement de l'image et est donc étroitement lié à la méthode quickshift. La méthode de regroupement étant plus simple, elle est très efficace. Il est essentiel pour cet algorithme de travailler dans l'espace couleur Lab pour obtenir de bons résultats. L'algorithme a rapidement pris de l'ampleur et est aujourd'hui largement utilisé. Le paramètre de compacité permet d'arbitrer entre la similarité des couleurs et la proximité, comme dans le cas de Quickshift, tandis que n_segments choisit le nombre de centres pour kmeans.
+
+
+![Capture d’écran du 2024-03-22 13-51-47](https://github.com/ToffoluttiVittorio/Projet_labellisation_IA/assets/61098254/e98fca9e-1404-4832-a999-85b48ee7e2a7)
