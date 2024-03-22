@@ -14,7 +14,12 @@ cog_folder = os.path.join(script_dir, 'cog_img')
 catalog = Catalog(id='my_catalog', description='My STAC Catalog')
 
 # Create a collection in the catalog
-extent = Extent(SpatialExtent([[-180, -90, 180, 90]]), TemporalExtent([[None, None]]))
+extent = Extent(SpatialExtent([[
+    -1323780.0,
+    2297160.0,
+    -1240700.0,
+    2378920.0
+  ],]), TemporalExtent([[None, None]]))
 collection = Collection(id='my_collection', description='My Collection', extent=extent)
 catalog.add_child(collection)
 
@@ -42,7 +47,7 @@ for filename in os.listdir(cog_folder):
         collection.add_item(item)
 
 # Set the self HREFs
-catalog.normalize_hrefs('./results')
+catalog.normalize_hrefs(root_href='./results_STAC')
 
 # Save the STAC catalog as a JSON file
 catalog_file = './catalog.json'
