@@ -12,3 +12,10 @@ Les images COG sont généralement organisées en plusieurs niveaux de résoluti
 
 ## Gestion efficace des métadonnées : 
 Diviser une grande image en tuiles permet également une gestion plus efficace des métadonnées associées à chaque tuile. Plutôt que d'avoir une seule ensemble de métadonnées pour toute l'image, chaque tuile peut avoir ses propres métadonnées spécifiques, ce qui facilite la gestion et la recherche des informations pertinentes.
+
+## Génération d'un fichier COG à partir d'un GeoTIFF
+
+-Installer GDAL : 
+'''bash
+test
+'''
