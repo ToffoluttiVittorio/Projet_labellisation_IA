@@ -6,7 +6,7 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 }).addTo(map);
 
 // URL to your locally hosted STAC catalog
-var stac_url = "../results_STAC/catalog.json";
+var stac_url = "/results/results_STAC/catalog.json";
 
 // Define the source projection (replace with the actual projection of your data)
 const sourceProjection = "EPSG:3979";
@@ -30,7 +30,8 @@ fetch(stac_url)
       (link) => link.rel === "child"
     );
     collection_links.forEach((collection_link) => {
-      const collection_url = "../results_STAC/my_collection/collection.json";
+      const collection_url =
+        "/results/results_STAC/my_collection/collection.json";
       // Fetching collection JSON
       fetch(collection_url)
         .then((response) => response.json())
@@ -40,7 +41,7 @@ fetch(stac_url)
             if (item_link.rel === "item") {
               // Construct the URL to the item
               const item_url =
-                "../results_STAC/my_collection/s4_12710_6725_20060726_m20_1_lcc00_cog.tif/s4_12710_6725_20060726_m20_1_lcc00_cog.tif.json";
+                "/results/results_STAC/my_collection/s4_12710_6725_20060726_m20_1_lcc00_cog.tif/s4_12710_6725_20060726_m20_1_lcc00_cog.tif.json";
               // Fetching item JSON
               fetch(item_url)
                 .then((response) => response.json())
