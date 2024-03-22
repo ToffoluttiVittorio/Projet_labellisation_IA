@@ -3,7 +3,7 @@
   "stac_version": "1.0.0",
   "id": "s4_12710_6725_20060726_m20_1_lcc00_cog.tif",
   "properties": {
-    "datetime": "2024-03-22T12:47:23.277918Z"
+    "datetime": "2024-03-22T14:07:15.905032Z"
   },
   "geometry": {
     "type": "Polygon",
@@ -35,23 +35,23 @@
   "links": [
     {
       "rel": "root",
-      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/results/catalog.json",
+      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/results_STAC/catalog.json",
       "type": "application/json"
     },
     {
       "rel": "collection",
-      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/results/my_collection/collection.json",
+      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/results_STAC/my_collection/collection.json",
       "type": "application/json"
     },
     {
       "rel": "parent",
-      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/results/my_collection/collection.json",
+      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/results_STAC/my_collection/collection.json",
       "type": "application/json"
     }
   ],
   "assets": {
     "data": {
-      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/Documentation/STAC/cog_img/s4_12710_6725_20060726_m20_1_lcc00_cog.tif",
+      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/dev/STAC/../../data/cog_img/s4_12710_6725_20060726_m20_1_lcc00_cog.tif",
       "type": "image/tiff; application=geotiff"
     }
   },
