@@ -1,4 +1,4 @@
-# COG
+# COG : Cloud Optimized GeoTIFF
 
 Un Cloud Optimized GeoTIFF (COG) est un fichier GeoTIFF normal, destiné à être hébergé sur un serveur de fichiers HTTP, avec une organisation interne qui permet des flux de travail plus efficaces sur le cloud.
 Il découpe les images en tuiles et les rend accessibles via des adresses URL, ce qui permet une visualisation rapide et efficace des données.
