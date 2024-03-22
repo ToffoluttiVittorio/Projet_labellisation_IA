@@ -6,7 +6,7 @@ Voici le résultat d'une segmentation par l'algorithme d'EPITA :
 
 ![Capture d’écran du 2024-03-22 14-09-48](https://github.com/ToffoluttiVittorio/Projet_labellisation_IA/assets/61098254/fd2f3e02-c34f-43e2-bcc8-1c7dda23c96f)
 
-Les algorithmes sont présents dans la librairie python skimage.
+Les algorithmes présentés sont présents dans la librairie python skimage.
 
 ## Segmentation de Felzenszwalb
 
