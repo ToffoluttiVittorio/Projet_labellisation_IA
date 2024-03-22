@@ -6,17 +6,17 @@
   "links": [
     {
       "rel": "root",
-      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/results/catalog.json",
+      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/results_STAC/catalog.json",
       "type": "application/json"
     },
     {
       "rel": "item",
-      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/results/my_collection/s4_12710_6725_20060726_m20_1_lcc00_cog.tif/s4_12710_6725_20060726_m20_1_lcc00_cog.tif.json",
+      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/results_STAC/my_collection/s4_12710_6725_20060726_m20_1_lcc00_cog.tif/s4_12710_6725_20060726_m20_1_lcc00_cog.tif.json",
       "type": "application/json"
     },
     {
       "rel": "parent",
-      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/results/catalog.json",
+      "href": "/home/formation/Documents/projetTFE/Projet_labellisation_IA/results_STAC/catalog.json",
       "type": "application/json"
     }
   ],
@@ -24,10 +24,10 @@
     "spatial": {
       "bbox": [
         [
-          -180,
-          -90,
-          180,
-          90
+          -1323780.0,
+          2297160.0,
+          -1240700.0,
+          2378920.0
         ]
       ]
     },
