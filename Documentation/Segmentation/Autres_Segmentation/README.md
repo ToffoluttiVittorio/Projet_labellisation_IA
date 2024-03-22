@@ -16,6 +16,9 @@ Cet algorithme rapide de segmentation d'images 2D, est populaire dans la communa
 
 Cet algorithme exécute simplement la méthode K-means dans l'espace 5d des informations sur les couleurs et l'emplacement de l'image et est donc étroitement lié à la méthode quickshift. La méthode de regroupement étant plus simple, elle est très efficace. Il est essentiel pour cet algorithme de travailler dans l'espace couleur Lab pour obtenir de bons résultats. L'algorithme a rapidement pris de l'ampleur et est aujourd'hui largement utilisé. Le paramètre de compacité permet d'arbitrer entre la similarité des couleurs et la proximité, comme dans le cas de Quickshift, tandis que n_segments choisit le nombre de centres pour kmeans.
 
+![Capture d’écran du 2024-03-22 13-47-24](https://github.com/ToffoluttiVittorio/Projet_labellisation_IA/assets/61098254/1b6a6500-1c69-4ef6-a4b9-7054c28825b9)
+
+
 ## Segmentation Quickshift 
 
 Quickshift est un algorithme de segmentation d'images 2D relativement récent, basé sur une approximation du décalage de la moyenne kernélisée. Il appartient donc à la famille des algorithmes de recherche de mode local et est appliqué à l'espace 5D composé d'informations sur les couleurs et l'emplacement de l'image.
@@ -23,6 +26,8 @@ Quickshift est un algorithme de segmentation d'images 2D relativement récent, b
 L'un des avantages du quickshift est qu'il calcule en fait une segmentation hiérarchique à plusieurs échelles simultanément.
 
 Quickshift a deux paramètres principaux : sigma contrôle l'échelle de l'approximation de la densité locale, max_dist sélectionne un niveau dans la segmentation hiérarchique qui est produite. Il existe également un compromis entre la distance dans l'espace couleur et la distance dans l'espace image, donné par le ratio.
+
+
 
 ## Segmentation Watershed
 
