@@ -27,6 +27,7 @@ L'un des avantages du quickshift est qu'il calcule en fait une segmentation hié
 
 Quickshift a deux paramètres principaux : sigma contrôle l'échelle de l'approximation de la densité locale, max_dist sélectionne un niveau dans la segmentation hiérarchique qui est produite. Il existe également un compromis entre la distance dans l'espace couleur et la distance dans l'espace image, donné par le ratio.
 
+![Capture d’écran du 2024-03-22 13-49-50](https://github.com/ToffoluttiVittorio/Projet_labellisation_IA/assets/61098254/67f13bd0-c6a0-474c-b77a-b338993aadcd)
 
 
 ## Segmentation Watershed
