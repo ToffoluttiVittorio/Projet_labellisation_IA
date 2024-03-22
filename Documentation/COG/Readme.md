@@ -15,7 +15,11 @@ Diviser une grande image en tuiles permet également une gestion plus efficace d
 
 ## Génération d'un fichier COG à partir d'un GeoTIFF
 
--Installer GDAL : 
-'''bash
-test
-'''
+-Installer GDAL (Ubuntu): 
+
+Pour obtenir la version la plus récente de GDAL run la commande suivante qui ajoute aux sources: 
+```sh
+sudo add-apt-repository ppa:ubuntugis/ppa
+```
+
+
