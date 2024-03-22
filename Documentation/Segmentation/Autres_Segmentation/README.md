@@ -11,9 +11,7 @@ Les algorithmes sont présents dans la librairie python skimage.
 Cet algorithme rapide de segmentation d'images 2D, est populaire dans la communauté de la vision par ordinateur. L'algorithme possède un seul paramètre d'échelle qui influence la taille des segments. La taille réelle et le nombre de segments peuvent varier considérablement en fonction du contraste local.
 
 <p align="center">
-
 ![Capture d’écran du 2024-03-22 12-29-38](https://github.com/ToffoluttiVittorio/Projet_labellisation_IA/assets/61098254/99774f6b-1a8c-4807-8c3b-88ca680c5c99)
-
 </p>
   
 ## Segmentation SLIC (K-means)
