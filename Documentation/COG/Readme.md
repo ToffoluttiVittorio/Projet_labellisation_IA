@@ -15,7 +15,7 @@ Diviser une grande image en tuiles permet également une gestion plus efficace d
 
 ## Génération d'un fichier COG à partir d'un GeoTIFF
 
--Installer GDAL (Ubuntu): 
+### Installer GDAL (Ubuntu): 
 
 Pour obtenir la version la plus récente de GDAL run la commande suivante qui ajoute aux sources: 
 ```sh
@@ -45,4 +45,21 @@ Exporter les deux variables PATH suivantes :
 ```sh
 export CPLUS_INCLUDE_PATH=/usr/include/gdal
 export C_INCLUDE_PATH=/usr/include/gdal
-``
+```
+
+### Utiliser GDAL avec le CLI
+
+GDAL possède une commande CLI qui permet de rééchantillonner le geotiff d'entrée : 
+
+```sh
+gdaladdo -r average in.tif 2 4 8 16
+```
+
+Ici on a une image d'entrée "in.tif" qui va être rééchantillonnée à plusieurs niveaux de zoom ici 2,4,8 et 16.
+
+Ensuite on peut appliquer un algorithme de GDAL qui permet de produire nos COG : 
+
+```sh
+gdal_translate in.tiff out.tiff -co COMPRESS=LZW -co TILED=YES -co COPY_SRC_OVERVIEWS=YES
+```
+Cet algorithme permet de créer des tuiles, copie les aperçus existants de GeoTiff, et compresse le GeoTiff.
