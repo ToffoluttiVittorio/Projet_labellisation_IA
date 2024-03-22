@@ -14,7 +14,7 @@ Cet algorithme rapide de segmentation d'images 2D, est populaire dans la communa
 
 ![Capture d’écran du 2024-03-22 12-29-38](https://github.com/ToffoluttiVittorio/Projet_labellisation_IA/assets/61098254/99774f6b-1a8c-4807-8c3b-88ca680c5c99)
 
-<\p>
+</p>
   
 ## Segmentation SLIC (K-means)
 
