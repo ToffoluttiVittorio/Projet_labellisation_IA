@@ -15,6 +15,9 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 PATCH_FOLDER = './output'
 app.config['PATCH_FOLDER'] = PATCH_FOLDER
 
+# Crée le dossier de sortie s'il n'existe pas
+os.makedirs(app.config['PATCH_FOLDER'], exist_ok=True)
+
 # Extensions de fichiers autorisées
 ALLOWED_EXTENSIONS = {'tif', 'tiff'}
 
@@ -25,6 +28,11 @@ def patch_image(input_file, output_dir, patch_size):
     # Crée le dossier de sortie s'il n'existe pas
     os.makedirs(output_dir, exist_ok=True)
 
+    # Crée un sous-dossier pour les patchs de cette image
+    image_id = os.path.splitext(os.path.basename(input_file))[0]
+    patch_folder = os.path.join(output_dir, f"{image_id}_{patch_size}")
+    os.makedirs(patch_folder, exist_ok=True)
+
     with rasterio.open(input_file) as src:
         rows = src.height // patch_size
         cols = src.width // patch_size
@@ -33,8 +41,8 @@ def patch_image(input_file, output_dir, patch_size):
             for col in range(cols):
                 window = Window(col * patch_size, row * patch_size, patch_size, patch_size)
                 patch = src.read(window=window)
-                patch_name = f"{os.path.splitext(os.path.basename(input_file))[0]}_patch_{row * cols + col + 1}.tif"
-                patch_output = os.path.join(output_dir, patch_name)
+                patch_name = f"{os.path.splitext(os.path.basename(input_file))[0]}_patch_size_{patch_size}_patch_{row * cols + col + 1}.tif"
+                patch_output = os.path.join(patch_folder, patch_name)  # Change output_dir to patch_folder
                 with rasterio.open(patch_output, 'w', driver='GTiff', width=patch_size, height=patch_size, count=src.count, dtype=src.dtypes[0], crs=src.crs, transform=src.window_transform(window)) as dst:
                     dst.write(patch)
 
@@ -52,12 +60,14 @@ def upload_file():
             return redirect(request.url)
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
+            # Crée le dossier d'upload s'il n'existe pas
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
             # Utilise la fonction patch_image pour traiter le fichier GeoTIFF
             input_file = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             output_dir = app.config['PATCH_FOLDER']
-            patch_size = 256
+            patch_size = int(request.form.get('patch_size'))
             patch_image(input_file, output_dir, patch_size)
 
             # Redirige vers une page indiquant que le traitement est terminé
