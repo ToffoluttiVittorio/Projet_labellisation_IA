@@ -9,4 +9,4 @@
 
 ![bdd gestion](Diagramme_bdd_gestion.png)
 
-![Sequence](Diagramme_sequence_front.drawio (1).png)
+![Sequence](Diagramme_sequence_front.drawio.png)
