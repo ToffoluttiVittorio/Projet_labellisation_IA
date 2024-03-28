@@ -1,1 +1,1 @@
-/usr/lib/postgresql/16/bin/postgres "-c" "max_connections=200"
+/usr/lib/postgresql/16/bin/postgres
