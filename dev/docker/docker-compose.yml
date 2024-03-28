@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  postgis:
+    image: postgis/postgis:16-3.4
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gestion #Nom de la DB
+    ports:
+      - "5000:5432"
+    volumes:
+      - ./init_data.sql:/docker-entrypoint-initdb.d/init_data.sql
+      - ./init_gestion.sql:/docker-entrypoint-initdb.d/init_gestion.sql
+      - ./data:/var/lib/postgresql/data
+    command: ["-c", "max_connections=200"]
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
