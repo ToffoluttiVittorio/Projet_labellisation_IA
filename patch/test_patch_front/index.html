@@ -8,9 +8,11 @@
 </head>
 
 <body>
-  <input type="file" id="fileInput" accept=".tif,.tiff">
+  <script src="./tiff.min.js"></script>
+  <input type="file" id="fileInput" accept=".tiff,.tif" />
+  <input type="text" id="urlInput" placeholder="Entrez l'URL du GeoTIFF" />
+  <button id="loadBtn">Charger le GeoTIFF</button>
   <button id="downloadBtn" style="display: none;">Download GeoTIFF</button>
-  <div id="downloadContainer"></div>
   <label for="patchSize">Patch Size:</label>
   <select id="patchSize" name="patchSize">
     <option value="128">128</option>
@@ -18,6 +20,10 @@
     <option value="512">512</option>
     <option value="1024">1024</option>
   </select>
+  <div id="imageContainer"></div>
+  <script>
+    window.Tiff = Tiff;
+  </script>
 </body>
 <script type="module" src="main.js"></script>
 

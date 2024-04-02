@@ -14,6 +14,7 @@
   "dependencies": {
     "file-saver": "^2.0.5",
     "geotiff": "^2.1.3",
-    "jszip": "^3.10.1"
+    "jszip": "^3.10.1",
+    "tiff.js": "^1.0.0"
   }
 }

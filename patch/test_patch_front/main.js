@@ -28,7 +28,9 @@ async function loadGeoTIFF(file) {
         patchSize = parseInt(this.value);
       }
 
-      const patches = [];
+      console.log(image.getWidth(), image.getHeight())
+
+      const arrayBuffers = [];
       for (let i = 0; i < image.getWidth(); i += patchSize) {
         for (let j = 0; j < image.getHeight(); j += patchSize) {
           const patch = await image.readRasters({
@@ -37,16 +39,30 @@ async function loadGeoTIFF(file) {
             interleave: true,
           });
           getImageMetadata(image, i, j, 512).then(metadata => {
-            const arrayBufferTest = GeoTIFF.writeArrayBuffer(patch, metadata);
-            const blob = new Blob([arrayBufferTest], { type: 'application/octet-stream' });
-
+            const arrayBufferPatch = GeoTIFF.writeArrayBuffer(patch, metadata);
+            arrayBuffers.push(arrayBufferPatch);
+            const blob = new Blob([arrayBufferPatch], { type: 'application/octet-stream' });
             zip.file(`image_${i}_${j}.tiff`, blob);
           });
-          patches.push(patch);
         }
       }
 
-      console.log(patches.length)
+      console.log(arrayBuffers[0])
+
+      const select = document.createElement('select');
+      arrayBuffers.forEach((buffer, index) => {
+        // Créer une nouvelle option pour chaque patch
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = `Patch ${index}`;
+        select.appendChild(option);
+      });
+      select.addEventListener('change', (event) => {
+        const buffer = arrayBuffers[event.target.value];
+        displayPatch(buffer);
+      });
+      document.body.appendChild(select);
+
 
       const downloadBtn = document.getElementById('downloadBtn');
       downloadBtn.style.display = 'block';
@@ -68,6 +84,68 @@ async function loadGeoTIFF(file) {
   }
 }
 
+// Fonction pour charger le GeoTIFF à partir du fichier uploadé par l'utilisateur
+async function loadGeoTIFFFromURL(url) {
+  try {
+    // Créer un objet GeoTIFF
+    const tiff = await GeoTIFF.fromUrl(url);
+    const image = await tiff.getImage();
+    const pool = new GeoTIFF.Pool();
+
+    const patchSizeSelect = document.getElementById('patchSize');
+    let patchSize = parseInt(patchSizeSelect.value);
+
+    patchSizeSelect.onchange = function () {
+      patchSize = parseInt(this.value);
+    }
+
+    const arrayBuffers = [];
+    for (let i = 0; i < image.getWidth(); i += patchSize) {
+      for (let j = 0; j < image.getHeight(); j += patchSize) {
+        const patch = await image.readRasters({
+          pool: pool,
+          window: [i, j, i + patchSize, j + patchSize],
+          interleave: true,
+        });
+        getImageMetadata(image, i, j, 512).then(metadata => {
+          const arrayBufferPatch = GeoTIFF.writeArrayBuffer(patch, metadata);
+          arrayBuffers.push(arrayBufferPatch);
+          const blob = new Blob([arrayBufferPatch], { type: 'application/octet-stream' });
+          zip.file(`image_${i}_${j}.tiff`, blob);
+        });
+      }
+    }
+
+    const select = document.createElement('select');
+    arrayBuffers.forEach((buffer, index) => {
+      // Créer une nouvelle option pour chaque patch
+      const option = document.createElement('option');
+      option.value = index;
+      option.textContent = `Patch ${index}`;
+      select.appendChild(option);
+    });
+    select.addEventListener('change', (event) => {
+      const buffer = arrayBuffers[event.target.value];
+      displayPatch(buffer);
+    });
+    document.body.appendChild(select);
+
+
+    const downloadBtn = document.getElementById('downloadBtn');
+    downloadBtn.style.display = 'block';
+
+    downloadBtn.addEventListener('click', function () {
+      zip.generateAsync({ type: "blob" }).then(function (content) {
+        // see FileSaver.js
+        saveAs(content, "example.zip");
+      });
+
+    });
+  } catch (error) {
+    console.error('Erreur lors du chargement du GeoTIFF : ', error);
+  }
+}
+
 // Fonction pour obtenir les métadonnées de l'image
 async function getImageMetadata(image, patchIndexX, patchIndexY, patchSize) {
   const fileDir = image.getFileDirectory();
@@ -82,14 +160,15 @@ async function getImageMetadata(image, patchIndexX, patchIndexY, patchSize) {
   const Orientation = 1;
   const ProjectedCSTypeGeoKey = image.geoKeys.ProjectedCSTypeGeoKey;
 
-  return {
+  //
+
+  let metadata = {
     height: patchSize,
     width: patchSize,
     GeoAsciiParams: GeoAsciiParams,
     BitsPerSample: BitsPerSample,
     SamplesPerPixel: SamplesPerPixel,
     PhotometricInterpretation: PhotometricInterpretation,
-    Compression: Compression,
     Orientation: Orientation,
     ProjectedCSTypeGeoKey: ProjectedCSTypeGeoKey,
     ModelTiepoint: [
@@ -102,22 +181,21 @@ async function getImageMetadata(image, patchIndexX, patchIndexY, patchSize) {
     GeoKeyDirectory: GeoKeyDirectory
   };
 
+  return metadata;
+
 }
 
-// Function to trigger download of the GeoTIFF
-function downloadGeoTIFF(arrayBuffer, fileName) {
-
-  const blob = new Blob([arrayBuffer], { type: 'application/octet-stream' });
-  const url = window.URL.createObjectURL(blob);
-
-  const a = document.createElement('a');
-  a.style.display = 'none';
-  a.href = url;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-
-  window.URL.revokeObjectURL(url);
+function displayPatch(arrayBuffer) {
+  const tiff = new window.Tiff({ buffer: arrayBuffer });
+  const canvas = tiff.toCanvas();
+  if (canvas) {
+    // Effacer le conteneur avant d'ajouter le nouveau canvas
+    const container = document.getElementById('imageContainer');
+    while (container.firstChild) {
+      container.firstChild.remove();
+    }
+    container.appendChild(canvas);
+  }
 }
 
 // Écouter les changements de l'input de fichier
@@ -126,5 +204,14 @@ fileInput.addEventListener('change', function (event) {
   const file = event.target.files[0]; // Récupérer le premier fichier sélectionné
   if (file) {
     loadGeoTIFF(file); // Appeler loadGeoTIFF avec le fichier sélectionné
+  }
+});
+
+const urlInput = document.getElementById('urlInput');
+const urlBtn = document.getElementById('loadBtn');
+urlBtn.addEventListener('click', function () {
+  const url = urlInput.value;
+  if (url) {
+    loadGeoTIFFFromURL(url);
   }
 });
