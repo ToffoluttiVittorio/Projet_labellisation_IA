@@ -2,7 +2,37 @@ import * as GeoTIFF from "geotiff";
 import JSZip from "jszip";
 import { saveAs } from 'file-saver';
 
-var zip = new JSZip();
+let zip = new JSZip();
+
+async function readPatches(image, patchSize, pool) {
+  const promises = [];
+  const totalPatches = Math.ceil(image.getWidth() / patchSize) * Math.ceil(image.getHeight() / patchSize);
+  const progressBar = document.getElementById('progressBar');
+  progressBar.max = totalPatches;
+
+  const height = image.getHeight();
+  const width = image.getWidth();
+
+  for (let i = 0; i < width; i += patchSize) {
+    for (let j = 0; j < height; j += patchSize) {
+      const promise = image.readRasters({
+        pool: pool,
+        window: [i, j, i + patchSize, j + patchSize],
+        interleave: true,
+      }).then(patch => {
+        return getImageMetadata(image, i, j, 512).then(metadata => {
+          const arrayBufferPatch = GeoTIFF.writeArrayBuffer(patch, metadata);
+          const blob = new Blob([arrayBufferPatch], { type: 'application/octet-stream' });
+          zip.file(`image_${i}_${j}.tiff`, blob);
+          progressBar.value += 1;
+          return arrayBufferPatch;
+        });
+      });
+      promises.push(promise);
+    }
+  }
+  return Promise.all(promises);
+}
 
 // Fonction pour charger le GeoTIFF à partir du fichier uploadé par l'utilisateur
 async function loadGeoTIFF(file) {
@@ -28,8 +58,6 @@ async function loadGeoTIFF(file) {
         patchSize = parseInt(this.value);
       }
 
-      console.log(image.getWidth(), image.getHeight())
-
       const arrayBuffers = [];
       for (let i = 0; i < image.getWidth(); i += patchSize) {
         for (let j = 0; j < image.getHeight(); j += patchSize) {
@@ -46,8 +74,6 @@ async function loadGeoTIFF(file) {
           });
         }
       }
-
-      console.log(arrayBuffers[0])
 
       const select = document.createElement('select');
       arrayBuffers.forEach((buffer, index) => {
@@ -99,22 +125,7 @@ async function loadGeoTIFFFromURL(url) {
       patchSize = parseInt(this.value);
     }
 
-    const arrayBuffers = [];
-    for (let i = 0; i < image.getWidth(); i += patchSize) {
-      for (let j = 0; j < image.getHeight(); j += patchSize) {
-        const patch = await image.readRasters({
-          pool: pool,
-          window: [i, j, i + patchSize, j + patchSize],
-          interleave: true,
-        });
-        getImageMetadata(image, i, j, 512).then(metadata => {
-          const arrayBufferPatch = GeoTIFF.writeArrayBuffer(patch, metadata);
-          arrayBuffers.push(arrayBufferPatch);
-          const blob = new Blob([arrayBufferPatch], { type: 'application/octet-stream' });
-          zip.file(`image_${i}_${j}.tiff`, blob);
-        });
-      }
-    }
+    const arrayBuffers = await readPatches(image, patchSize, pool);
 
     const select = document.createElement('select');
     arrayBuffers.forEach((buffer, index) => {
@@ -136,7 +147,6 @@ async function loadGeoTIFFFromURL(url) {
 
     downloadBtn.addEventListener('click', function () {
       zip.generateAsync({ type: "blob" }).then(function (content) {
-        // see FileSaver.js
         saveAs(content, "example.zip");
       });
 
