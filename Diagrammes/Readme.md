@@ -14,3 +14,7 @@
 
 ## Diagramme de sequence front
 ![Sequence](Diagramme_sequence_front.drawio.png)
+
+## Design front
+![Sequence](Final_front.drawio.png)
+
