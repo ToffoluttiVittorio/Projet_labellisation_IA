@@ -1,2 +1,5 @@
 **/node_modules
+
+patch/test_flask/data/*
+patch/test_flask/output/*
 dev/docker/data/

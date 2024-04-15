@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <script src="./tiff.min.js"></script>
+  <input type="file" id="fileInput" accept=".tiff,.tif" />
+  <input type="text" id="urlInput" placeholder="Entrez l'URL du GeoTIFF" />
+  <button id="loadBtn">Charger le GeoTIFF</button>
+  <button id="downloadBtn" style="display: none;">Download GeoTIFF</button>
+  <label for="patchSize">Patch Size:</label>
+  <select id="patchSize" name="patchSize">
+    <option value="128">128</option>
+    <option value="256">256</option>
+    <option value="512">512</option>
+    <option value="1024">1024</option>
+  </select>
+  <div id="imageContainer"></div>
+  <progress id="progressBar" value="0" max="100"></progress>
+  <script>
+    window.Tiff = Tiff;
+  </script>
+</body>
+<script type="module" src="main.js"></script>
+
+</html>
