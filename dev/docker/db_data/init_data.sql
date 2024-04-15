@@ -58,3 +58,4 @@ CREATE TABLE public.COG (
 
 ALTER TABLE IF EXISTS public.COG
 	OWNER to postgres;
+
