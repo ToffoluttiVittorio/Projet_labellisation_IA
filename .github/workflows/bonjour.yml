@@ -8,7 +8,8 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Build and start Docker Compose services
         run: |
@@ -32,3 +33,16 @@ jobs:
             echo "Test failed: Incorrect number of rows in the chantier table."
             exit 1
           fi
+
+  test_vitest_js:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Vitest
+        run: npm run test
