@@ -46,14 +46,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+    #   - name: Setup Node
+    #     uses: actions/setup-node@v4
 
       - name: Install dependencies
         run: npm install
         working-directory: inlab/
-
-      - run : ls -l 
 
       - name: Run Vitest
         run: npm run test
