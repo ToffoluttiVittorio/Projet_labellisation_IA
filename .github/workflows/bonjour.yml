@@ -1,7 +1,12 @@
 name: Test docker bdd
 
 on:
-  push:
+    push:
+        branches:
+          - '*'
+    pull_request:
+        branches:
+          - '*'
 
 jobs:
   test_bdd:
@@ -40,6 +45,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
 
       - name: Install dependencies
         run: npm install
