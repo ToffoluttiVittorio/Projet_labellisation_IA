@@ -1,0 +1,34 @@
+name: Test docker bdd
+
+on:
+  push:
+
+jobs:
+  test_bdd:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and start Docker Compose services
+        run: |
+          docker-compose -f ./dev/docker/docker-compose.yml up -d
+
+      - name: Wait for postgis_db_data to become ready
+        run: |
+          echo "Waiting for postgis_db_data to be ready..."
+          until docker exec postgis_data pg_isready -U postgres -d data; do
+            sleep 5;
+          done
+          echo "Database is ready."
+
+      - name: Check inserted data
+        run: |
+          RESULT=$(docker exec postgis_data psql -U postgres -d data -c "SELECT COUNT(*) FROM chantier;")
+          echo "Query result: $RESULT"
+          if [[ "$RESULT" == *'2'* ]]; then
+            echo "Test passed: 2 rows found in the chantier table."
+          else
+            echo "Test failed: Incorrect number of rows in the chantier table."
+            exit 1
+          fi
