@@ -53,6 +53,8 @@ jobs:
         run: npm install
         working-directory: inlab/
 
+      - run : ls -l 
+
       - name: Run Vitest
         run: npm run test
         working-directory: inlab/
