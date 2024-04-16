@@ -25,7 +25,7 @@ class Test(db.Model):
 class Chantier(db.Model):
     __tablename__ = 'chantier'
     id = db.Column(db.Integer, primary_key=True)
-    id_style = db.Column(db.Integer, nullable=False)
+    id_style = db.Column(db.Integer, nullable=True)
     code = db.Column(db.Integer, nullable=False)
     nbr_image = db.Column(db.Integer, nullable=False)
     stac_url = db.Column(db.String(255), nullable=False)
