@@ -7,10 +7,13 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 -- ------------------------------------------------------------------ --
 
 CREATE TABLE public.user(
-    id SERIAL,
-    username VARCHAR(255) PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255),
     password VARCHAR(255)
 );
+
+ALTER TABLE IF EXISTS public.user
+	OWNER to postgres;
 
 CREATE TABLE public.chantier (
     id SERIAL PRIMARY KEY,
@@ -18,7 +21,8 @@ CREATE TABLE public.chantier (
     code INT NOT NULL,
     nbr_image INT NOT NULL,
     stac_url VARCHAR(255) NOT NULL,
-    FOREIGN KEY (user_key) REFERENCES user(username),
+    user_key INT NOT NULL,
+    FOREIGN KEY (user_key) REFERENCES "user"(id),
     name VARCHAR(255)
 );
 
@@ -28,7 +32,7 @@ ALTER TABLE IF EXISTS public.chantier
 CREATE TABLE public.image_sortie (
     id SERIAL PRIMARY KEY,
     Name VARCHAR(255) NOT NULL,
-    ID_chantier INT NOT NULL,
+    id_chantier INT NOT NULL,
     FOREIGN KEY (id_chantier) REFERENCES chantier(id)
 );
 
