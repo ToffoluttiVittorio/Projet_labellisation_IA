@@ -33,7 +33,8 @@ CREATE TABLE public.image_sortie (
     id SERIAL PRIMARY KEY,
     Name VARCHAR(255) NOT NULL,
     id_chantier INT NOT NULL,
-    FOREIGN KEY (id_chantier) REFERENCES chantier(id)
+    FOREIGN KEY (id_chantier) REFERENCES chantier(id),
+    current_patch integer[]
 );
 
 ALTER TABLE IF EXISTS public.image_sortie
@@ -52,7 +53,7 @@ ALTER TABLE IF EXISTS public.patch
 CREATE TABLE public.catalogue (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    data JSON NOT NULL
+    data JSON NOT NULL  
 );
 
 ALTER TABLE IF EXISTS public.catalogue

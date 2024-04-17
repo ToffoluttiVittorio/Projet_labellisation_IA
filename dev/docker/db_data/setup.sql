@@ -1,7 +1,7 @@
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE user
 INSERT INTO public.user (id,username,password) VALUES
-(1,'lem','password')
-(2,'leh','1234')
+(1,'lem','password'),
+(2,'leh','1234');
 
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE Chantier
 INSERT INTO public.Chantier (id_style, code, nbr_image, stac_url, user_key, name) VALUES
@@ -10,15 +10,15 @@ INSERT INTO public.Chantier (id_style, code, nbr_image, stac_url, user_key, name
 (2, 5678, 3, 'https://exemple.com/chantier2',2,'Région parisienne');
 
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE Image_sortie
-INSERT INTO public.image_sortie (name, id_chantier) VALUES
-('https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/10/T/ES/2022/7/S2A_10TES_20220726_0_L2A/TCI.tif', 1),
-('https://storage.googleapis.com/open-cogs/stac-examples/20201211_223832_CS2.tif', 1);
+INSERT INTO public.image_sortie (name, id_chantier,current_patch) VALUES
+('https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/10/T/ES/2022/7/S2A_10TES_20220726_0_L2A/TCI.tif', 1, '{1, 2}'),
+('https://storage.googleapis.com/open-cogs/stac-examples/20201211_223832_CS2.tif', 1,'{1, 2}');
 
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE Patch
 INSERT INTO public.patch (name, id_img_sortie) VALUES
 ('Patch1', 1),
-('Patch2', 2),
-('Patch3', 3);
+('Patch2', 2);
+
 
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE Catalogue 
 INSERT INTO public.catalogue (name, data) VALUES
