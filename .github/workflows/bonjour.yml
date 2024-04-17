@@ -32,8 +32,8 @@ jobs:
         run: |
           RESULT=$(docker exec postgis_data psql -U postgres -d data -c "SELECT COUNT(*) FROM chantier;")
           echo "Query result: $RESULT"
-          if [[ "$RESULT" >= *'1'* ]]; then
-            echo "Test passed: 3 rows found in the chantier table."
+          if [ "$RESULT" -ge 1 ]; then
+            echo "Test passed: at least 1 row found in the chantier table."
           else
             echo "Test failed: Incorrect number of rows in the chantier table."
             exit 1
