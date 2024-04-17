@@ -7,26 +7,26 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 -- ------------------------------------------------------------------ --
 
 
-CREATE TABLE public.Style (
+CREATE TABLE public.style (
     id SERIAL PRIMARY KEY,
-    Nom VARCHAR(255) NOT NULL,
-    "Couleur de fond" INT,
-    "Type de ligne" VARCHAR(255),
-    "Taille de ligne" INT,
-    Transparence INT
+    nom VARCHAR(255) NOT NULL,
+    couleur_de_fond INT,
+    type_de_ligne VARCHAR(255),
+    taille_de_ligne INT,
+    transparence INT
 );
 
-ALTER TABLE IF EXISTS public.Style
+ALTER TABLE IF EXISTS public.style
 	OWNER to postgres;
 
 
-CREATE TABLE public.Nomenclature (
-    ID_style INT NOT NULL,
-    ID SERIAL PRIMARY KEY,
-    Libellé VARCHAR(255) NOT NULL,
-    Couleur INT NOT NULL,
-    FOREIGN KEY (ID_style) REFERENCES Style(id)
+CREATE TABLE public.nomenclature (
+    id_style INT NOT NULL,
+    id SERIAL PRIMARY KEY,
+    libellé VARCHAR(255) NOT NULL,
+    couleur INT NOT NULL,
+    FOREIGN KEY (id_style) REFERENCES style(id)
 );
 
-ALTER TABLE IF EXISTS public.Nomenclature
+ALTER TABLE IF EXISTS public.nomenclature
 	OWNER to postgres;
