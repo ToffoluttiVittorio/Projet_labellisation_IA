@@ -30,14 +30,17 @@ jobs:
 
       - name: Check inserted data
         run: |
-          RESULT=$(docker exec postgis_data psql -U postgres -d data -c "SELECT COUNT(*) FROM chantier;")
-          echo "Query result: $RESULT"
-          if [ "$RESULT" -ge 1 ]; then
-            echo "Test passed: at least 1 row found in the chantier table."
-          else
-            echo "Test failed: Incorrect number of rows in the chantier table."
-            exit 1
-          fi
+            RESULT=$(docker exec postgis_data psql -U postgres -d data -tAc "SELECT COUNT(*) FROM chantier;")
+            echo "Query result: $RESULT"
+            COUNT=$(echo "$RESULT" | awk '{print $1}')
+            echo "Row count: $COUNT"
+            if [ "$COUNT" -ge 1 ]; then
+              echo "Test passed: At least one row found in the chantier table."
+            else
+              echo "Test failed: No rows found in the chantier table."
+              exit 1
+            fi
+  
 
   test_vitest_js:
     runs-on: ubuntu-latest
