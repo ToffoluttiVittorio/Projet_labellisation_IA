@@ -6,56 +6,67 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 -- --  Tables and constraints                                      -- --
 -- ------------------------------------------------------------------ --
 
-CREATE TABLE public.Chantier (
-    ID SERIAL PRIMARY KEY,
-    ID_style INT NOT NULL,
-    Code INT NOT NULL,
-    Nbr_image INT NOT NULL,
-    STAC_URL VARCHAR(255) NOT NULL
+CREATE TABLE public.user(
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255),
+    password VARCHAR(255)
 );
 
-ALTER TABLE IF EXISTS public.Chantier
+ALTER TABLE IF EXISTS public.user
 	OWNER to postgres;
 
-CREATE TABLE public.Image_sortie (
-    ID SERIAL PRIMARY KEY,
-    Name VARCHAR(255) NOT NULL,
-    Data JSONB,
-    ID_chantier INT NOT NULL,
-    FOREIGN KEY (ID_chantier) REFERENCES Chantier(ID)
+CREATE TABLE public.chantier (
+    id SERIAL PRIMARY KEY,
+    id_style INT NOT NULL,
+    code INT NOT NULL,
+    nbr_image INT NOT NULL,
+    stac_url VARCHAR(255) NOT NULL,
+    user_key INT NOT NULL,
+    FOREIGN KEY (user_key) REFERENCES "user"(id),
+    name VARCHAR(255)
 );
 
-ALTER TABLE IF EXISTS public.Image_sortie
+ALTER TABLE IF EXISTS public.chantier
 	OWNER to postgres;
 
-CREATE TABLE public.Patch (
-    ID SERIAL PRIMARY KEY,
+CREATE TABLE public.image_sortie (
+    id SERIAL PRIMARY KEY,
     Name VARCHAR(255) NOT NULL,
-    ID_img_sortie INT NOT NULL,
-    Data JSONB NOT NULL,
-    FOREIGN KEY (ID_img_sortie) REFERENCES Image_sortie(ID)
+    id_chantier INT NOT NULL,
+    FOREIGN KEY (id_chantier) REFERENCES chantier(id),
+    current_patch integer[]
 );
 
-ALTER TABLE IF EXISTS public.Patch
+ALTER TABLE IF EXISTS public.image_sortie
 	OWNER to postgres;
 
-CREATE TABLE public.Catalogue (
-    ID SERIAL PRIMARY KEY,
-    Name VARCHAR(255) NOT NULL,
-    Data JSON NOT NULL
+CREATE TABLE public.patch (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    id_img_sortie INT NOT NULL,
+    FOREIGN KEY (id_img_sortie) REFERENCES image_sortie(id)
 );
 
-ALTER TABLE IF EXISTS public.Catalogue
+ALTER TABLE IF EXISTS public.patch
 	OWNER to postgres;
 
-CREATE TABLE public.COG (
-    ID SERIAL PRIMARY KEY,
-    Name VARCHAR(255) NOT NULL,
-    Data JSON NOT NULL,
-    ID_catalogue INT NOT NULL,
-    FOREIGN KEY (ID_catalogue) REFERENCES Catalogue(ID)
+CREATE TABLE public.catalogue (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    data JSON NOT NULL  
 );
 
-ALTER TABLE IF EXISTS public.COG
+ALTER TABLE IF EXISTS public.catalogue
+	OWNER to postgres;
+
+CREATE TABLE public.cog (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    data JSON NOT NULL,
+    id_catalogue INT NOT NULL,
+    FOREIGN KEY (id_catalogue) REFERENCES catalogue(id)
+);
+
+ALTER TABLE IF EXISTS public.cog
 	OWNER to postgres;
 

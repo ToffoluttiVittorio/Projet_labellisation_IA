@@ -2,6 +2,7 @@ from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import ARRAY
 
 app = Flask(__name__)
 CORS(app)
@@ -25,24 +26,35 @@ class Test(db.Model):
 class Chantier(db.Model):
     __tablename__ = 'chantier'
     id = db.Column(db.Integer, primary_key=True)
-    id_style = db.Column(db.Integer, nullable=True)
+    id_style = db.Column(db.Integer, nullable=False)
     code = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(255))
     nbr_image = db.Column(db.Integer, nullable=False)
     stac_url = db.Column(db.String(255), nullable=False)
+    user_key = db.Column(db.String(255), db.ForeignKey('user.username'), nullable=False)
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+class User(db.Model):
+    __tablename__ = 'user'
+    id = db.Column(db.Integer)
+    username = db.Column(db.String(255), primary_key=True)
+    password = db.Column(db.String(255), nullable=False)
 
 class Image_sortie(db.Model):
     __tablename__ = 'image_sortie'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
-    data = db.Column(JSONB)
     id_chantier = db.Column(db.Integer, db.ForeignKey('chantier.id'), nullable=False)
+    current_patch = db.Column(ARRAY(db.Integer))
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 class Patch(db.Model):
     __tablename__ = 'patch'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     id_img_sortie = db.Column(db.Integer, db.ForeignKey('image_sortie.id'), nullable=False)
-    data = db.Column(JSONB, nullable=False)
 
 class Catalogue(db.Model):
     __tablename__ = 'catalogue'
@@ -70,35 +82,52 @@ def create_chantier():
     chantier = Chantier(**request.json)
     db.session.add(chantier)
     db.session.commit()
-    return {'id': chantier.ID}, 201
+    return {'id': chantier.id}, 201
+
+@app.route('/data/user/getChantier', methods=['GET'])
+def get_chantier():
+    chantier = Chantier.query.filter_by(user_key=request.args.get('user_key')).all()
+    return {'chantier': [c.to_dict() for c in chantier]}
+
+@app.route('/data/chantier/getImages', methods=['GET'])
+def get_images():
+    images = Image_sortie.query.filter_by(id_chantier=request.args.get('id_chantier')).all()
+    return {'images': [i.to_dict() for i in images]}
 
 @app.route('/data/image_sortie', methods=['POST'])
 def create_image_sortie():
     image_sortie = Image_sortie(**request.json)
     db.session.add(image_sortie)
     db.session.commit()
-    return {'id': image_sortie.ID}, 201
+    return {'id': image_sortie.id}, 201
+
+@app.route('/data/update_current_patch', methods=['POST'])
+def update_current_patch():
+    image_sortie = Image_sortie.query.get(request.json.get('id'))
+    image_sortie.current_patch = request.json.get('current_patch')
+    db.session.commit()
+    return {'id': image_sortie.id}, 201
 
 @app.route('/data/patch', methods=['POST'])
 def create_patch():
     patch = Patch(**request.json)
     db.session.add(patch)
     db.session.commit()
-    return {'id': patch.ID}, 201
+    return {'id': patch.id}, 201
 
 @app.route('/data/catalogue', methods=['POST'])
 def create_catalogue():
     catalogue = Catalogue(**request.json)
     db.session.add(catalogue)
     db.session.commit()
-    return {'id': catalogue.ID}, 201
+    return {'id': catalogue.id}, 201
 
 @app.route('/data/cog', methods=['POST'])
 def create_cog():
     cog = COG(**request.json)
     db.session.add(cog)
     db.session.commit()
-    return {'id': cog.ID}, 201
+    return {'id': cog.id}, 201
 
 ################################## BDD GESTION ##################################
 
@@ -147,7 +176,7 @@ def create_nomenclature():
     nomenclature = Nomenclature(**request.json)
     db.session.add(nomenclature)
     db.session.commit()
-    return {'id': nomenclature.ID}, 201
+    return {'id': nomenclature.id}, 201
 
 if __name__ == '__main__':
     app.run(debug=True)
