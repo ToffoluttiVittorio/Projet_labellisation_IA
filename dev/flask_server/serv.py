@@ -70,35 +70,35 @@ def create_chantier():
     chantier = Chantier(**request.json)
     db.session.add(chantier)
     db.session.commit()
-    return {'id': chantier.ID}, 201
+    return {'id': chantier.id}, 201
 
 @app.route('/data/image_sortie', methods=['POST'])
 def create_image_sortie():
     image_sortie = Image_sortie(**request.json)
     db.session.add(image_sortie)
     db.session.commit()
-    return {'id': image_sortie.ID}, 201
+    return {'id': image_sortie.id}, 201
 
 @app.route('/data/patch', methods=['POST'])
 def create_patch():
     patch = Patch(**request.json)
     db.session.add(patch)
     db.session.commit()
-    return {'id': patch.ID}, 201
+    return {'id': patch.id}, 201
 
 @app.route('/data/catalogue', methods=['POST'])
 def create_catalogue():
     catalogue = Catalogue(**request.json)
     db.session.add(catalogue)
     db.session.commit()
-    return {'id': catalogue.ID}, 201
+    return {'id': catalogue.id}, 201
 
 @app.route('/data/cog', methods=['POST'])
 def create_cog():
     cog = COG(**request.json)
     db.session.add(cog)
     db.session.commit()
-    return {'id': cog.ID}, 201
+    return {'id': cog.id}, 201
 
 ################################## BDD GESTION ##################################
 
@@ -147,7 +147,7 @@ def create_nomenclature():
     nomenclature = Nomenclature(**request.json)
     db.session.add(nomenclature)
     db.session.commit()
-    return {'id': nomenclature.ID}, 201
+    return {'id': nomenclature.id}, 201
 
 if __name__ == '__main__':
     app.run(debug=True)

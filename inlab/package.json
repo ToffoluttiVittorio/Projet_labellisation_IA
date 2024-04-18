@@ -9,8 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "jquery": "^3.7.1",
+    "axios": "^1.6.8",
     "geotiff": "^2.1.3",
+    "jquery": "^3.7.1",
     "ol": "^9.1.0",
     "ol-contextmenu": "^5.4.0",
     "ol-ext": "^4.0.17",
