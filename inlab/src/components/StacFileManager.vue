@@ -36,6 +36,7 @@ li {
 import * as STAC from "./stac.js";
 import STACLayer from "ol-stac";
 import axios from "axios";
+import { pan } from "ol/interaction/Interaction";
 
 export default {
   inject: ["map"],
@@ -73,11 +74,10 @@ export default {
             panAssetHref = assets.pan
               ? assets.pan.href
               : Object.values(assets)[0].href;
-            console.log(panAssetHref);
+            this.layers[panAssetHref] = stac;
           })
           .catch((error) => console.error("Error:", error));
 
-        this.layers[panAssetHref] = stac;
         this.map.map.addLayer(stac);
 
         stac.on("sourceready", () => {
