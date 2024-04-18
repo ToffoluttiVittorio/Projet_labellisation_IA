@@ -6,16 +6,19 @@
       <input type="text" v-model="url" placeholder="Enter URL" />
       <button type="submit">Enter</button>
     </form>
-    <ul>
-      <li v-for="file in files" :key="file.url">
-        {{ file.href }}
-        <input
-          type="checkbox"
-          v-model="file.checked"
-          @change="updateMap(file)"
-        />
-      </li>
-    </ul>
+    <div class="scrollable">
+      <ul>
+        <li v-for="file in files" :key="file.url">
+          {{ file.href }}
+          <input
+            type="checkbox"
+            v-model="file.checked"
+            @change="updateMap(file)"
+          />
+        </li>
+      </ul>
+    </div>
+    <button @click="saveProject">Enregistrer le chantier</button>
   </div>
 </template>
 
@@ -23,11 +26,16 @@
 li {
   text-align: left;
 }
+.scrollable {
+  height: 80%;
+  overflow-y: auto;
+}
 </style>
 
 <script>
 import * as stac from "./stac.js";
 import STACLayer from "ol-stac";
+import axios from "axios";
 
 export default {
   inject: ["map"],
@@ -68,6 +76,39 @@ export default {
           delete this.layers[file.href]; // Remove the layer from the layers object
         }
       }
+    },
+    saveProject() {
+      let project = {
+        layers: Object.keys(this.layers),
+      };
+      console.log(project);
+
+      // Enregistrez le chantier
+      axios
+        .post("http://localhost:5000/data/chantier", {
+          id_style: 1, // Remplacez par l'ID de style approprié
+          code: 1, // Remplacez par le code approprié
+          nbr_image: project.layers.length,
+          stac_url: this.url,
+        })
+        .then((response) => {
+          // Enregistrez chaque couche comme une image_sortie
+          let promises = project.layers.map((layer) => {
+            return axios.post("http://localhost:5000/data/image_sortie", {
+              name: layer, // Utilisez le nom de la couche comme nom de l'image_sortie
+              data: {}, // Remplacez par les données appropriées
+              id_chantier: response.data.id, // Utilisez l'ID du chantier que nous venons de créer
+            });
+          });
+
+          // Une fois que toutes les requêtes axios sont terminées, changez de route
+          axios.all(promises).then(() => {
+            this.$router.push({
+              name: "labellisation",
+              params: { id: response.data.id },
+            });
+          });
+        });
     },
   },
 };

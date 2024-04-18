@@ -8,18 +8,19 @@
 <style scoped>
 .container {
   display: flex;
+  overflow: None;
 }
 
 .stacReader {
   width: 25%;
-  height: 100vh;
+  height: 95vh;
   overflow: auto;
   border-right: 1px solid #ccc;
 }
 
 #map {
   width: 75%;
-  height: 100vh;
+  height: 95vh;
 }
 </style>
 
