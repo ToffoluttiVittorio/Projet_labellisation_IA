@@ -33,7 +33,7 @@ li {
 </style>
 
 <script>
-import * as stac from "./stac.js";
+import * as STAC from "./stac.js";
 import STACLayer from "ol-stac";
 import axios from "axios";
 
@@ -50,10 +50,10 @@ export default {
   created() {},
   methods: {
     loadFiles() {
-      let index = new stac.Index();
+      let index = new STAC.Index();
       index.initialize(this.url);
       const rootNode = index.getRootNode();
-      // console.log(rootNode.entry.links);
+      console.log(rootNode.entry.links);
       this.files = rootNode.entry.links;
     },
     updateMap(file) {
@@ -63,18 +63,31 @@ export default {
         let stac = new STACLayer({
           url: file.href,
         });
-        console.log(stac);
-        this.layers[file.href] = stac;
+
+        let panAssetHref = "";
+
+        fetch(file.href)
+          .then((response) => response.json())
+          .then((data) => {
+            let assets = data.assets;
+            panAssetHref = assets.pan
+              ? assets.pan.href
+              : Object.values(assets)[0].href;
+            console.log(panAssetHref);
+          })
+          .catch((error) => console.error("Error:", error));
+
+        this.layers[panAssetHref] = stac;
         this.map.map.addLayer(stac);
 
         stac.on("sourceready", () => {
           this.map.map.getView().fit(stac.getExtent());
         });
       } else {
-        let stac = this.layers[file.href]; // Retrieve the layer
+        let stac = this.layers[panAssetHref]; // Retrieve the layer
         if (stac) {
           this.map.map.removeLayer(stac);
-          delete this.layers[file.href]; // Remove the layer from the layers object
+          delete this.layers[panAssetHref]; // Remove the layer from the layers object
         }
       }
     },

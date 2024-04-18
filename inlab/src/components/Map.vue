@@ -72,10 +72,6 @@ export default {
     stac.on("sourceready", () => {
       this.map.getView().fit(stac.getExtent());
     });
-
-    console.log(this.map);
-    console.log("map mounted");
-    console.log(this.map.getLayers().getArray());
   },
 };
 </script>
