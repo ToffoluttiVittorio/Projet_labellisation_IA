@@ -41,6 +41,7 @@ export default {
   inject: ["map"],
   data() {
     return {
+      clicked: false,
       files: [],
       url: "https://canada-spot-ortho.s3.amazonaws.com/canada_spot_orthoimages/canada_spot4_orthoimages/S4_2006/catalog.json",
       layers: {},
@@ -77,7 +78,14 @@ export default {
         }
       }
     },
+
     saveProject() {
+      if (this.clicked) {
+        return; // Si oui, ne rien faire
+      }
+      // Marquer le clic comme effectué
+      this.clicked = true;
+
       let project = {
         layers: Object.keys(this.layers),
       };
@@ -88,10 +96,10 @@ export default {
         .post("http://localhost:5000/data/chantier", {
           id_style: 1, // Remplacez par l'ID de style approprié
           code: 1, // Remplacez par le code approprié
-          name: "Nom du chantier", // nom du chantier
-          nbr_image: project.layers.length, 
-          stac_url: this.url, 
-          user_key: 1, // id du user 
+          name: "La frod", // nom du chantier
+          nbr_image: project.layers.length,
+          stac_url: this.url,
+          user_key: 1, // id du user
         })
         .then((response) => {
           // Enregistrez chaque couche comme une image_sortie
@@ -99,7 +107,7 @@ export default {
             return axios.post("http://localhost:5000/data/image_sortie", {
               name: layer, // Utilisez le nom de la couche comme nom de l'image_sortie
               id_chantier: response.data.id, // Utilisez l'ID du chantier que nous venons de créer
-              current_patch: [0,0],
+              current_patch: [0, 0],
             });
           });
 
