@@ -88,16 +88,18 @@ export default {
         .post("http://localhost:5000/data/chantier", {
           id_style: 1, // Remplacez par l'ID de style approprié
           code: 1, // Remplacez par le code approprié
-          nbr_image: project.layers.length,
-          stac_url: this.url,
+          name: "Nom du chantier", // nom du chantier
+          nbr_image: project.layers.length, 
+          stac_url: this.url, 
+          user_key: 1, // id du user 
         })
         .then((response) => {
           // Enregistrez chaque couche comme une image_sortie
           let promises = project.layers.map((layer) => {
             return axios.post("http://localhost:5000/data/image_sortie", {
               name: layer, // Utilisez le nom de la couche comme nom de l'image_sortie
-              data: {}, // Remplacez par les données appropriées
               id_chantier: response.data.id, // Utilisez l'ID du chantier que nous venons de créer
+              current_patch: [0,0],
             });
           });
 
