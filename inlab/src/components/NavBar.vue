@@ -1,4 +1,5 @@
 <template>
+
     <nav class="navbar">
         <router-link to="/" class="link">Accueil</router-link>
         <router-link to="/map" class="link">Carte</router-link>
@@ -6,39 +7,39 @@
         <router-link to="/labellisation" class="link">Labellisation</router-link>
         <router-link to="/login" class="auth-link">Login</router-link>
     </nav>
+
 </template>
 
 <script>
 export default {
-    name: 'NavBar'
+  name: "NavBar",
 };
 </script>
 
 <style scoped>
 .navbar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 5vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 5vh;
 
-    background-color: black;
-    color: #fff;
+  background-color: black;
+  color: #fff;
 
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
 }
 
 .link {
-    margin: 0 20px;
-    font-size: 1.5vw;
+  margin: 0 20px;
+  font-size: 1.5vw;
 
-    font-family: system-ui;
-    color: #fff;
-    text-decoration: none;
+  font-family: system-ui;
+  color: #fff;
+  text-decoration: none;
 }
 
 .auth-link {
@@ -50,8 +51,8 @@ export default {
 }
 
 @media (max-width: 800px) {
-    .link {
-        font-size: 3vw;
-    }
+  .link {
+    font-size: 3vw;
+  }
 }
 </style>
