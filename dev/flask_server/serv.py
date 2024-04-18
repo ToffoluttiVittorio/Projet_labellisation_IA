@@ -31,14 +31,14 @@ class Chantier(db.Model):
     name = db.Column(db.String(255))
     nbr_image = db.Column(db.Integer, nullable=False)
     stac_url = db.Column(db.String(255), nullable=False)
-    user_key = db.Column(db.String(255), db.ForeignKey('user.username'), nullable=False)
+    user_key = db.Column(db.String(255), db.ForeignKey('user.id'), nullable=False)
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 class User(db.Model):
     __tablename__ = 'user'
-    id = db.Column(db.Integer)
-    username = db.Column(db.String(255), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(255), nullable=False)
     password = db.Column(db.String(255), nullable=False)
 
 class Image_sortie(db.Model):
@@ -128,6 +128,45 @@ def create_cog():
     db.session.add(cog)
     db.session.commit()
     return {'id': cog.id}, 201
+
+@app.route('/data/user/getUser', methods=['GET'])
+def get_users():
+    users = User.query.all()
+    return {'users': [u.username for u in users]}
+    
+
+@app.route('/data/user/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+
+    user = User.query.filter_by(username=username).first()
+    if user:
+        if user.password == password:
+            return {'message': 'Connexion réussie'}, 200
+        else:
+            return {'error': 'Mot de passe incorrect'}, 401
+    else:
+        return {'error': 'Nom d\'utilisateur introuvable'}, 404    
+    
+    
+@app.route('/data/user/createUser', methods=['POST'])
+def signup():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+
+    existing_user = User.query.filter_by(username=username).first()
+    if existing_user:
+        return {'message': 'Nom d\'utilisateur déjà pris'}, 400
+
+    new_user = User(username=username, password=password)
+    db.session.add(new_user)
+    db.session.commit()
+
+    return {'message': 'Utilisateur créé avec succès'}, 201
+
 
 ################################## BDD GESTION ##################################
 
