@@ -93,11 +93,19 @@ export default {
         })
         .then((response) => {
           // Enregistrez chaque couche comme une image_sortie
-          project.layers.forEach((layer) => {
-            axios.post("http://localhost:5000/data/image_sortie", {
+          let promises = project.layers.map((layer) => {
+            return axios.post("http://localhost:5000/data/image_sortie", {
               name: layer, // Utilisez le nom de la couche comme nom de l'image_sortie
               data: {}, // Remplacez par les données appropriées
               id_chantier: response.data.id, // Utilisez l'ID du chantier que nous venons de créer
+            });
+          });
+
+          // Une fois que toutes les requêtes axios sont terminées, changez de route
+          axios.all(promises).then(() => {
+            this.$router.push({
+              name: "labellisation",
+              params: { id: response.data.id },
             });
           });
         });
