@@ -1,13 +1,4 @@
 <template>
-
-    <div id="images-menu-container">
-        <select v-model="selectedImage" @change="handleImageChange">
-            <option value="">Sélectionner une image</option>
-            <option v-for="image in images" :key="image.id" :value="image.name">{{ image.name }}</option>
-        </select>
-    </div>
-
-
     <div id="labellisation-container">
         <div class="app" id="app">
             <div class="app-header">
@@ -52,7 +43,7 @@
                     </div>
                 </div>
                 <div class="canvas-container">
-                    <canvas class="canvas" id="canvas" ref="canvas"></canvas>
+                    <canvas class="canvas" id="canvas"></canvas>
                     <canvas class="canvas" id="canvasVector" ref="canvasVector"></canvas>
                 </div>
             </div>
@@ -61,14 +52,15 @@
 
 
     </div>
-    <div class="button-container">
+
+   <div class="button-container">
         <button @click="moveLeft" :disabled="i === 0">←</button>
         <button @click="moveUp" :disabled="j === 0">↑</button>
         <button @click="moveRight" :disabled="i === numPatchesX - 1">→</button>
         <button @click="moveDown" :disabled="j === numPatchesY - 1">↓</button>
     </div>
 
-     <canvas id="previsualisation" ref="canvasPrevisu"></canvas>
+     <canvas id="previsualisation" ref="canvas"></canvas>
 </template>
 
 
@@ -78,7 +70,6 @@ import { build_hierarchy_wasm, display_labels_wasm, cut_hierarchy_wasm, Hierarch
 import { fromArrayBuffer, fromBlob } from 'geotiff';
 import proj4 from 'proj4';
 import * as GeoTIFF from "geotiff";
-import axios from 'axios';
 
 async function getImageMetadata(image, offsetX, offsetY, patchSize) {
     const fileDir = image.getFileDirectory();
@@ -110,7 +101,6 @@ async function getImageMetadata(image, offsetX, offsetY, patchSize) {
         ModelPixelScale: ModelPixelScale,
         GeoKeyDirectory: GeoKeyDirectory
     };
-
     console.log(metadata);
     return metadata;
 }
@@ -139,19 +129,17 @@ export default {
             className: null,
             classColor: '',
             varFill: null,
-            images: [],
-            selectedImage: '',
             i: 0,
             j: 0,
             numPatchesX: 0,
             numPatchesY: 0,
             patchSize: 512,
+            url : "https://oin-hotosm.s3.amazonaws.com/631ee60b3cdf1c0006b63c54/0/631ee60b3cdf1c0006b63c55.tif",
         };
     },
     mounted() {
-        // this.setupFileInput();
+        this.setupFileInput();
         this.setupSlider();
-        this.getImages();
     },
     methods: {
         moveLeft() {
@@ -178,29 +166,10 @@ export default {
                 this.setupFileInput();
             }
         },
-
-        handleImageChange() {
-            this.setupFileInput();
-        },
-
-        async getImages() {
-            axios.get('http://localhost:5000/data/chantier/getImages', {
-                params: {
-                    id_chantier: this.id
-                }
-            })
-                .then(response => {
-                    this.images = [...response.data.images];
-                    // console.log(this.images);
-                })
-                .catch(error => {
-                    console.error('Erreur lors de la récupération des images :', error);
-                });
-        },
-
         async getPatch() {
-            const tiff = await GeoTIFF.fromUrl(this.selectedImage)
+            const tiff = await GeoTIFF.fromUrl(this.url)
             const image = await tiff.getImage();
+            
 
             const imageWidth = image.getWidth();
             const imageHeight = image.getHeight();
@@ -214,7 +183,7 @@ export default {
             this.numPatchesX = Math.ceil(imageWidth / this.patchSize);
             this.numPatchesY = Math.ceil(imageHeight / this.patchSize);
 
-            const canvas = this.$refs.canvasPrevisu;
+            const canvas = this.$refs.canvas;
             canvas.width = 300;  // Set the canvas width in pixels
             canvas.height = 300; // Set the canvas height in pixels
             const ctx = canvas.getContext('2d');
@@ -247,71 +216,6 @@ export default {
             // const uploadPatch = await axios.post('http://localhost:5000/data/patch', { name: patchName, id_img_sortie: idImageSortie });
             // const updateCurrentPatch = await axios.post('http://localhost:5000/data/update_current_patch', { id: idImageSortie, current_patch: [this.patchIndexI, this.patchIndexJ] });
             return arrayBufferPatch;
-        },
-
-        async setupFileInput() {
-            const arrayBuffer = await this.getPatch();
-            this.processTiff(arrayBuffer);
-        },
-
-        async readTiff(buffer) {
-            const tiff = await fromArrayBuffer(buffer);
-            const image = await tiff.getImage();
-
-            const width = image.getWidth();
-            const height = image.getHeight();
-            const channels = image.getSamplesPerPixel();
-
-            const bytesPerValue = image.getBytesPerPixel() / channels;
-            if (bytesPerValue !== 1) {
-                throw new Error('Only 8-bit images are supported');
-            }
-
-            const data = await image.readRasters();
-
-            const merged = new Uint8Array(width * height * channels);
-            data.forEach((channel, i) => {
-                merged.set(channel, i * width * height);
-            });
-
-            return {
-                width,
-                height,
-                channels,
-                data: merged,
-            }
-        },
-
-        async processTiff(buffer) {
-            const test = await this.getPatch();
-            this.tiff = await this.readTiff(test);
-
-            const clusterCount = Math.round(this.tiff.width * this.tiff.height / 200);
-            this.hierarchy = build_hierarchy_wasm(this.tiff.data, this.tiff.width, this.tiff.height, this.tiff.channels, clusterCount)
-            const labels = cut_hierarchy_wasm(this.hierarchy, 0);
-            const bitmapResult = display_labels_wasm(this.tiff.data, this.tiff.width, this.tiff.height, labels);
-
-            const uint8ClampedArray = new Uint8ClampedArray(bitmapResult);
-            const imageData = new ImageData(uint8ClampedArray, this.tiff.width, this.tiff.height);
-            const imageBitmap = await createImageBitmap(imageData);
-
-            let canvas = this.$refs.canvas;
-            let ctx = canvas.getContext('2d');
-            canvas.width = this.tiff.width;
-            canvas.height = this.tiff.height
-            ctx.drawImage(imageBitmap, 0, 0);
-
-            let ctxVector = this.$refs.canvasVector.getContext('2d');
-            this.$refs.canvasVector.width = this.tiff.width;
-            this.$refs.canvasVector.height = this.tiff.height;
-            this.$refs.canvasVector.style.opacity = sliderOpacity.value;
-            ctxVector.clearRect(0, 0, canvas.width, canvas.height);
-
-            const neighboringRegions = this.findNeighboringRegions(labels, canvas.width, canvas.height)
-
-            this.varFill = this.fillRegion(labels, neighboringRegions);
-            this.$refs.canvasVector.addEventListener('click', this.varFill);
-
         },
 
         convertToGeographicCoords(x, y) {
@@ -389,9 +293,11 @@ export default {
             const newButton = document.createElement('button');
             newButton.textContent = this.textContent;
             newButton.style.backgroundColor = this.buttonColor;
+            console.log(this.textContent);
+            console.log(this.buttonColor);
             newButton.classList.add('btnLabel');
 
-            this.$refs.classButtonsContainer.appendChild(newButton);
+            this.classButtonsContainer.appendChild(newButton);
 
             this.textContent = '';
             this.buttonColor = '';
@@ -400,6 +306,71 @@ export default {
                 this.className = newButton.textContent;
                 this.classColor = newButton.style.backgroundColor;
             });
+        },
+
+        setupFileInput() {
+            const arrayBuffer = this.getPatch();
+            this.processTiff(arrayBuffer);
+        },
+
+        async readTiff(buffer) {
+            const tiff = await fromArrayBuffer(buffer);
+            const image = await tiff.getImage();
+
+            const width = image.getWidth();
+            const height = image.getHeight();
+            const channels = image.getSamplesPerPixel();
+
+            const bytesPerValue = image.getBytesPerPixel() / channels;
+            if (bytesPerValue !== 1) {
+                throw new Error('Only 8-bit images are supported');
+            }
+
+            const data = await image.readRasters();
+
+            const merged = new Uint8Array(width * height * channels);
+            data.forEach((channel, i) => {
+                merged.set(channel, i * width * height);
+            });
+
+            return {
+                width,
+                height,
+                channels,
+                data: merged,
+            }
+        },
+
+        async processTiff(buffer) {
+            const test = await this.getPatch();
+            this.tiff = await this.readTiff(test);
+
+            const clusterCount = Math.round(this.tiff.width * this.tiff.height / 200);
+            this.hierarchy = build_hierarchy_wasm(this.tiff.data, this.tiff.width, this.tiff.height, this.tiff.channels, clusterCount)
+            const labels = cut_hierarchy_wasm(this.hierarchy, 0);
+            const bitmapResult = display_labels_wasm(this.tiff.data, this.tiff.width, this.tiff.height, labels);
+
+            const uint8ClampedArray = new Uint8ClampedArray(bitmapResult);
+            const imageData = new ImageData(uint8ClampedArray, this.tiff.width, this.tiff.height);
+            const imageBitmap = await createImageBitmap(imageData);
+
+            let canvas = document.getElementById('canvas');
+            let ctx = canvas.getContext('2d');
+            canvas.width = this.tiff.width;
+            canvas.height = this.tiff.height
+            ctx.drawImage(imageBitmap, 0, 0);
+
+            let ctxVector = this.$refs.canvasVector.getContext('2d');
+            this.$refs.canvasVector.width = this.tiff.width;
+            this.$refs.canvasVector.height = this.tiff.height;
+            this.$refs.canvasVector.style.opacity = sliderOpacity.value;
+            ctxVector.clearRect(0, 0, canvas.width, canvas.height);
+
+            const neighboringRegions = this.findNeighboringRegions(labels, canvas.width, canvas.height)
+
+            this.varFill = this.fillRegion(labels, neighboringRegions);
+            this.$refs.canvasVector.addEventListener('click', this.varFill);
+
         },
 
         findNeighboringRegions(labels, width, height) {
@@ -586,6 +557,8 @@ export default {
             const queue = [];
             queue.push({ x: i, y: j });
 
+            console.log(neighbors);
+
             while (queue.length > 0) {
                 const { x, y } = queue.shift();
                 if (visited[x][y]) {
@@ -723,7 +696,7 @@ export default {
             const imageData = new ImageData(uint8ClampedArray, this.tiff.width, this.tiff.height);
             const imageBitmap = await createImageBitmap(imageData);
 
-            let canvas = this.$refs.canvas;
+            let canvas = document.getElementById('canvas');
             let ctx = canvas.getContext('2d');
 
             let ctxVector = this.$refs.canvasVector.getContext('2d');
@@ -766,18 +739,13 @@ div.button-container {
   justify-content: center;
   gap: 10px;
 }
-#images-menu-container,
 #labellisation-container {
     position: absolute;
-    top: 7vh;
+    top: 5vh;
     left: 0;
 
     width: 100vw;
     height: 95vh;
-}
-
-#labellisation-container {
-    top: 10vh;
 }
 
 .app {
@@ -859,7 +827,6 @@ input[name=range] {
 }
 
 #canvasVector {
-
     /* background-color: red; */
 }
 
