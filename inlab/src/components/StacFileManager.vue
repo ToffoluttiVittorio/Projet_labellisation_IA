@@ -10,11 +10,7 @@
       <ul>
         <li v-for="file in files" :key="file.url">
           {{ file.href }}
-          <input
-            type="checkbox"
-            v-model="file.checked"
-            @change="updateMap(file)"
-          />
+          <input type="checkbox" v-model="file.checked" @change="updateMap(file)" />
         </li>
       </ul>
     </div>
@@ -26,6 +22,7 @@
 li {
   text-align: left;
 }
+
 .scrollable {
   height: 80%;
   overflow-y: auto;
@@ -48,7 +45,7 @@ export default {
       layers: {},
     };
   },
-  created() {},
+  created() { },
   methods: {
     loadFiles() {
       let index = new STAC.Index();

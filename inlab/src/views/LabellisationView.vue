@@ -1,26 +1,35 @@
 <template>
-    <div id="aaa">
+
+    <div id="images-menu-container">
+        <select v-model="selectedImage" @change="handleImageChange">
+            <option value="">Sélectionner une image</option>
+            <option v-for="image in images" :key="image.id" :value="image.name">{{ image.name }}</option>
+        </select>
+    </div>
+
+
+    <div id="labellisation-container">
         <div class="app" id="app">
             <div class="app-header">
                 <input type="file" id="file-selector">
-                <input type="range" min="0" max="1" step="0.01" value="0.2" id="sliderOpacity">
+                <input type="range" min="0" max="1" step="0.01" value="0.2" id="sliderOpacity" @input="updateOpacity">
 
                 <div class="nomenclature-container" id="nomenclature">
-                    <input type="file" id="csv-input" accept=".csv">
+                    <input type="file" id="csv-input" accept=".csv" @change="updateNomCsv">
                     <div id="class-buttons" ref="classButtonsContainer"></div>
                 </div>
 
-                <button id="btnExport">exporter</button>
-                <button id="vectorize">vectorize</button>
+                <button @click="exportImage">exporter</button>
+                <button @click="vectorize">vectorize</button>
 
             </div>
 
             <div id="buttonCreation">
-                <form id="buttonForm">
+                <form @submit.prevent="handleSubmit">
                     <label for="textContent">Texte:</label>
-                    <input type="text" id="textContent" name="textContent">
+                    <input type="text" id="textContent" name="textContent" v-model="textContent">
                     <label for="buttonColor">Couleur:</label>
-                    <input type="color" id="buttonColor" name="buttonColor">
+                    <input type="color" id="buttonColor" name="buttonColor" v-model="buttonColor">
                     <button type="submit">Créer Bouton</button>
                 </form>
             </div>
@@ -43,10 +52,11 @@
                     </div>
                 </div>
                 <div class="canvas-container">
-                    <canvas class="canvas" id="canvas"></canvas>
+                    <canvas class="canvas" id="canvas" ref="canvas"></canvas>
                     <canvas class="canvas" id="canvasVector" ref="canvasVector"></canvas>
                 </div>
             </div>
+            <p>Id récupéré depuis l'URL : {{ id }}</p>
         </div>
 
 
@@ -59,11 +69,56 @@
 import { build_hierarchy_wasm, display_labels_wasm, cut_hierarchy_wasm, Hierarchy } from '../../pkg';
 import { fromArrayBuffer, fromBlob } from 'geotiff';
 import proj4 from 'proj4';
+import * as GeoTIFF from "geotiff";
+import axios from 'axios';
+
+async function getImageMetadata(image, offsetX, offsetY, patchSize) {
+    const fileDir = image.getFileDirectory();
+    const ModelPixelScale = fileDir.ModelPixelScale;
+    const ModelTiepoint = fileDir.ModelTiepoint;
+    const GeoKeyDirectory = fileDir.GeoKeyDirectory;
+    const BitsPerSample = fileDir.BitsPerSample;
+    const GeoAsciiParams = fileDir.GeoAsciiParams;
+    const PhotometricInterpretation = fileDir.PhotometricInterpretation;
+    const SamplesPerPixel = fileDir.SamplesPerPixel;
+    const Orientation = 1;
+    const ProjectedCSTypeGeoKey = image.geoKeys.ProjectedCSTypeGeoKey;
+
+    let metadata = {
+        height: patchSize,
+        width: patchSize,
+        GeoAsciiParams: GeoAsciiParams,
+        BitsPerSample: BitsPerSample,
+        SamplesPerPixel: SamplesPerPixel,
+        PhotometricInterpretation: PhotometricInterpretation,
+        Orientation: Orientation,
+        ProjectedCSTypeGeoKey: ProjectedCSTypeGeoKey,
+        ModelTiepoint: [
+            0, 0, 0,
+            ModelTiepoint[3] + (offsetX * ModelPixelScale[0]),
+            ModelTiepoint[4] - (offsetY * ModelPixelScale[1]),
+            ModelTiepoint[5]
+        ],
+        ModelPixelScale: ModelPixelScale,
+        GeoKeyDirectory: GeoKeyDirectory
+    };
+
+    console.log(metadata);
+    return metadata;
+}
 
 export default {
     name: 'LabellisationView',
+    props: {
+        id: {
+            type: Number,
+            required: true
+        }
+    },
     data() {
         return {
+            textContent: '',
+            buttonColor: '',
             hierarchy: null,
             tiff: null,
             topLeftCoords: [],
@@ -72,143 +127,82 @@ export default {
                 type: 'FeatureCollection',
                 features: []
             },
-            classButtonsContainer: null,
             classCode: '',
             className: null,
             classColor: '',
-            varFill: null
+            varFill: null,
+            images: [],
+            selectedImage: ''
         };
     },
     mounted() {
-        const btnVectorize = document.getElementById('vectorize');
-        const sliderOpacity = document.getElementById('sliderOpacity');
-        this.classButtonsContainer = document.getElementById('class-buttons');
-        const csvFileInput = document.getElementById('csv-input');
-        const btnFormNom = document.getElementById('buttonForm');
-        const btnExport = document.getElementById('btnExport');
-
-        sliderOpacity.addEventListener('input', () => {
-            let canvasVector = document.getElementById('canvasVector');
-            canvasVector.style.opacity = sliderOpacity.value;
-        });
-
-        btnVectorize?.addEventListener('click', () => {
-            const jsonContent = JSON.stringify(this.geoJSON);
-            const blob = new Blob([jsonContent], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'geojson_data.json';
-            document.body.appendChild(a);
-            a.click();
-            URL.revokeObjectURL(url);
-        });
-
-        csvFileInput?.addEventListener('change', () => {
-            const files = csvFileInput.files;
-            const file = files[0];
-            const reader = new FileReader();
-
-            reader.onload = function (e) {
-                const csv = reader.result;
-                this.processData(csv);
-            }.bind(this);
-
-            reader.readAsText(file);
-        });
-
-        btnFormNom?.addEventListener('submit', (event) => {
-            event.preventDefault();
-
-            const textContent = document.getElementById('textContent').value;
-            const buttonColor = document.getElementById('buttonColor').value;
-
-            const newButton = document.createElement('button');
-            newButton.textContent = textContent;
-            newButton.style.backgroundColor = buttonColor;
-            newButton.classList.add('btnLabel');
-
-            this.classButtonsContainer.appendChild(newButton);
-            document.getElementById('buttonForm').reset();
-
-            newButton.addEventListener('click', () => {
-                this.className = newButton.textContent;
-                this.classColor = newButton.style.backgroundColor;
-            });
-        });
-
-        btnExport?.addEventListener('click', () => {
-            let canvasVector = document.getElementById('canvasVector');
-            const image = canvasVector.toDataURL('image/png');
-            const downloadLink = document.createElement('a');
-            downloadLink.href = image;
-            downloadLink.download = 'canvas_image.png';
-
-            downloadLink.click();
-        });
-
-        // this.varFill = this.fillRegion(labels, regionBoundaries);
-
-        this.setupFileInput();
+        // this.setupFileInput();
         this.setupSlider();
+        this.getImages();
     },
     methods: {
 
-        convertToGeographicCoords(x, y) {
-            const sourceProjection = '+proj=lcc +lat_1=44 +lat_2=49 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs';
-            const destProjection = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs';
-            return proj4(sourceProjection, destProjection, [x, y]);
+        handleImageChange() {
+            this.setupFileInput();
         },
 
-        processData(csv) {
-            const lines = csv.split('\n');
-            lines.forEach((line, index) => {
-                if (index === 0 || line === '') return;
-
-                const columns = line.split(';');
-
-                const code = columns[0];
-                const name = columns[1].replace(/_/g, ' ').toUpperCase();
-                const color = columns[2].slice(1, -1);
-                const colorValues = color.split(',');
-
-                const button = document.createElement('button');
-                button.classList.add('btnLabel');
-                button.id = code;
-                button.textContent = name;
-                button.style.backgroundColor = `rgb(${colorValues[0]}, ${colorValues[1]}, ${colorValues[2]})`;
-                this.classButtonsContainer.appendChild(button);
-
-                button.addEventListener('click', () => {
-                    this.classCode = button.id;
-                    this.className = button.textContent;
-                    this.classColor = button.style.backgroundColor;
-                });
-            });
-        },
-
-        setupFileInput() {
-            const fileSelector = document.getElementById('file-selector');
-            fileSelector.addEventListener('change', () => {
-                const files = fileSelector.files;
-
-                for (let i = 0; i < files.length; i++) {
-                    const file = files.item(i);
-                    this.getCoordinates(file);
-
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                        const arrayBuffer = reader.result;
-                        this.processTiff(arrayBuffer);
-                    }
-                    reader.readAsArrayBuffer(file);
+        async getImages() {
+            axios.get('http://localhost:5000/data/chantier/getImages', {
+                params: {
+                    id_chantier: this.id
                 }
+            })
+                .then(response => {
+                    this.images = [...response.data.images];
+                    // console.log(this.images);
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération des images :', error);
+                });
+        },
+
+        async getPatch() {
+
+            // const url = "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/10/T/ES/2022/7/S2A_10TES_20220726_0_L2A/TCI.tif"
+            const i = 0, j = 0;
+            const tiff = await GeoTIFF.fromUrl(this.selectedImage);
+            const image = await tiff.getImage();
+            // Vérifiez si les valeurs i,j sont en dehors des limites de l'image
+            if (i * parseInt(512) > image.getWidth() || j * parseInt(512) > image.getHeight()) {
+                console.log("Index out of bounds")
+                return;
+            }
+            const pool = new GeoTIFF.Pool();
+            const patchSize = parseInt(512);
+            const offsetX = i * patchSize;
+            const offsetY = j * patchSize;
+            const patchName = `image_${i}_${j}.tiff`;
+            const idImageSortie = 2;
+            const patch = await image.readRasters({
+                pool: pool,
+                window: [offsetX, offsetY, offsetX + patchSize, offsetY + patchSize],
+                interleave: true,
             });
+            const metadata = await getImageMetadata(image, offsetX, offsetY, patchSize);
+            const arrayBufferPatch = await GeoTIFF.writeArrayBuffer(patch, metadata);
+            //const blob = new Blob([arrayBufferPatch], { type: 'application/octet-stream' });
+            //saveAs(blob, patchName);
+            // const uploadPatch = await axios.post('http://localhost:5000/data/patch', { name: patchName, id_img_sortie: idImageSortie });
+            // const updateCurrentPatch = await axios.post('http://localhost:5000/data/update_current_patch', { id: idImageSortie, current_patch: [this.patchIndexI, this.patchIndexJ] });
+            return arrayBufferPatch;
+        },
+
+        async setupFileInput() {
+            const arrayBuffer = await this.getPatch();
+            this.processTiff(arrayBuffer);
         },
 
         async readTiff(buffer) {
+            console.log(buffer);
             const tiff = await fromArrayBuffer(buffer);
+            console.log(tiff);
             const image = await tiff.getImage();
+            console.log(image);
 
             const width = image.getWidth();
             const height = image.getHeight();
@@ -235,8 +229,10 @@ export default {
         },
 
         async processTiff(buffer) {
+            const test = await this.getPatch();
 
-            this.tiff = await this.readTiff(buffer);
+            this.tiff = await this.readTiff(test);
+            console.log('ap');
 
             const clusterCount = Math.round(this.tiff.width * this.tiff.height / 200);
             this.hierarchy = build_hierarchy_wasm(this.tiff.data, this.tiff.width, this.tiff.height, this.tiff.channels, clusterCount)
@@ -247,24 +243,111 @@ export default {
             const imageData = new ImageData(uint8ClampedArray, this.tiff.width, this.tiff.height);
             const imageBitmap = await createImageBitmap(imageData);
 
-            let canvas = document.getElementById('canvas');
+            let canvas = this.$refs.canvas;
             let ctx = canvas.getContext('2d');
             canvas.width = this.tiff.width;
             canvas.height = this.tiff.height
             ctx.drawImage(imageBitmap, 0, 0);
 
-            let canvasVector = document.getElementById('canvasVector');
-            let ctxVector = canvasVector.getContext('2d');
-            canvasVector.width = this.tiff.width;
-            canvasVector.height = this.tiff.height;
-            canvasVector.style.opacity = sliderOpacity.value;
+            let ctxVector = this.$refs.canvasVector.getContext('2d');
+            this.$refs.canvasVector.width = this.tiff.width;
+            this.$refs.canvasVector.height = this.tiff.height;
+            this.$refs.canvasVector.style.opacity = sliderOpacity.value;
             ctxVector.clearRect(0, 0, canvas.width, canvas.height);
 
             const neighboringRegions = this.findNeighboringRegions(labels, canvas.width, canvas.height)
 
             this.varFill = this.fillRegion(labels, neighboringRegions);
-            canvasVector.addEventListener('click', this.varFill);
+            this.$refs.canvasVector.addEventListener('click', this.varFill);
 
+        },
+
+        convertToGeographicCoords(x, y) {
+            const sourceProjection = '+proj=lcc +lat_1=44 +lat_2=49 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs';
+            const destProjection = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs';
+            return proj4(sourceProjection, destProjection, [x, y]);
+        },
+
+
+        vectorize() {
+            const jsonContent = JSON.stringify(this.geoJSON);
+            const blob = new Blob([jsonContent], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'geojson_data.json';
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(url);
+        },
+
+        exportImage() {
+
+            const image = this.$refs.canvasVector.toDataURL('image/png');
+            const downloadLink = document.createElement('a');
+            downloadLink.href = image;
+            downloadLink.download = 'canvas_image.png';
+            downloadLink.click();
+        },
+
+        updateOpacity(event) {
+            this.$refs.canvasVector.style.opacity = event.target.value;
+        },
+
+        updateNomCsv() {
+            const files = event.target.files;
+            const file = files[0];
+            const reader = new FileReader();
+
+            reader.onload = () => {
+                const csv = reader.result;
+                this.processData(csv);
+            };
+
+            reader.readAsText(file);
+        },
+
+        processData(csv) {
+            const lines = csv.split('\n');
+            lines.forEach((line, index) => {
+                if (index === 0 || line === '') return;
+
+                const columns = line.split(';');
+
+                const code = columns[0];
+                const name = columns[1].replace(/_/g, ' ').toUpperCase();
+                const color = columns[2].slice(1, -1);
+                const colorValues = color.split(',');
+
+                const button = document.createElement('button');
+                button.classList.add('btnLabel');
+                button.id = code;
+                button.textContent = name;
+                button.style.backgroundColor = `rgb(${colorValues[0]}, ${colorValues[1]}, ${colorValues[2]})`;
+                this.$refs.classButtonsContainer.appendChild(button);
+
+                button.addEventListener('click', () => {
+                    this.classCode = button.id;
+                    this.className = button.textContent;
+                    this.classColor = button.style.backgroundColor;
+                });
+            });
+        },
+        handleSubmit() {
+            const newButton = document.createElement('button');
+            newButton.textContent = this.textContent;
+            newButton.style.backgroundColor = this.buttonColor;
+            newButton.classList.add('btnLabel');
+
+            this.$refs.classButtonsContainer.appendChild(newButton);
+
+            this.textContent = '';
+            this.buttonColor = '';
+
+            newButton.addEventListener('click', () => {
+                this.className = newButton.textContent;
+                this.classColor = newButton.style.backgroundColor;
+            });
         },
 
         findNeighboringRegions(labels, width, height) {
@@ -437,8 +520,7 @@ export default {
             let pointsInReg = [];
             let pointsSeg = [];
 
-            let canvasVector = document.getElementById('canvasVector');
-            let ctxVector = canvasVector.getContext('2d');
+            let ctxVector = this.$refs.canvasVector.getContext('2d');
 
             const holesInReg = new Map();
 
@@ -451,8 +533,6 @@ export default {
 
             const queue = [];
             queue.push({ x: i, y: j });
-
-            console.log(neighbors);
 
             while (queue.length > 0) {
                 const { x, y } = queue.shift();
@@ -493,11 +573,11 @@ export default {
             }
 
 
-            const neighborsPerPixel = this.searchNeighborsInReg(pointsSeg, canvasVector.width);
-            const orderedPixels = this.traversePixelsInOrder(neighborsPerPixel, canvasVector.width);
+            const neighborsPerPixel = this.searchNeighborsInReg(pointsSeg, this.$refs.canvasVector.width);
+            const orderedPixels = this.traversePixelsInOrder(neighborsPerPixel, this.$refs.canvasVector.width);
             orderedPixels.push(orderedPixels[0]);
-            const convOrdPixels = this.convertToCoordinatesXY(orderedPixels, canvasVector.width);
-            const filteredConvPixels = this.convertToCoordinates(convOrdPixels, canvasVector.width, canvasVector.height);
+            const convOrdPixels = this.convertToCoordinatesXY(orderedPixels, this.$refs.canvasVector.width);
+            const filteredConvPixels = this.convertToCoordinates(convOrdPixels, this.$refs.canvasVector.width, this.$refs.canvasVector.height);
 
 
             const outerPolygon = {
@@ -518,11 +598,11 @@ export default {
 
             const holesPolygons = [];
             holesInReg.forEach((holePixels, holeRegion) => {
-                const neighborsPerPixel = this.searchNeighborsInReg(holePixels, canvasVector.width);
-                const orderedPixels = this.traversePixelsInOrder(neighborsPerPixel, canvasVector.width);
+                const neighborsPerPixel = this.searchNeighborsInReg(holePixels, this.$refs.canvasVector.width);
+                const orderedPixels = this.traversePixelsInOrder(neighborsPerPixel, this.$refs.canvasVector.width);
                 orderedPixels.push(orderedPixels[0]);
-                const convOrdPixels = this.convertToCoordinatesXY(orderedPixels, canvasVector.width);
-                const filteredConvPixels = this.convertToCoordinates(convOrdPixels, canvasVector.width, canvasVector.height);
+                const convOrdPixels = this.convertToCoordinatesXY(orderedPixels, this.$refs.canvasVector.width);
+                const filteredConvPixels = this.convertToCoordinates(convOrdPixels, this.$refs.canvasVector.width, this.$refs.canvasVector.height);
 
                 holesPolygons.push(filteredConvPixels);
             });
@@ -544,9 +624,8 @@ export default {
 
         flood_fill(labels, y, x, regionBoundaries) {
 
-            let canvasVector = document.getElementById('canvasVector');
-            const height = canvasVector.height;
-            const width = canvasVector.width;
+            const height = this.$refs.canvasVector.height;
+            const width = this.$refs.canvasVector.width;
 
             const region = labels[y * width + x];
             const visited = [];
@@ -566,8 +645,7 @@ export default {
 
         fillRegion(labels, regionBoundaries) {
             return (event) => {
-                let canvasVector = this.$refs.canvasVector;
-                const rect = canvasVector.getBoundingClientRect();
+                const rect = this.$refs.canvasVector.getBoundingClientRect();
                 const x = Math.floor(event.clientX - rect.left);
                 const y = Math.floor(event.clientY - rect.top);
 
@@ -593,11 +671,10 @@ export default {
             const imageData = new ImageData(uint8ClampedArray, this.tiff.width, this.tiff.height);
             const imageBitmap = await createImageBitmap(imageData);
 
-            let canvas = document.getElementById('canvas');
+            let canvas = this.$refs.canvas;
             let ctx = canvas.getContext('2d');
 
-            let canvasVector = document.getElementById('canvasVector');
-            let ctxVector = canvasVector.getContext('2d');
+            let ctxVector = this.$refs.canvasVector.getContext('2d');
             canvas.width = this.tiff.width;
             canvas.height = this.tiff.height;
             ctx.drawImage(imageBitmap, 0, 0);
@@ -605,10 +682,10 @@ export default {
             ctxVector.clearRect(0, 0, canvas.width, canvas.height);
 
             if (this.varFill) {
-                canvasVector.removeEventListener('click', this.varFill);
+                this.$refs.canvasVector.removeEventListener('click', this.varFill);
                 const neighboringRegions = this.findNeighboringRegions(labels, canvas.width, canvas.height)
                 this.varFill = this.fillRegion(labels, neighboringRegions);
-                canvasVector.addEventListener('click', this.varFill);
+                this.$refs.canvasVector.addEventListener('click', this.varFill);
             }
 
             this.geoJSON = {
@@ -622,16 +699,19 @@ export default {
 </script>
 
 
-
-
-<style scoped>
-#aaa {
+<style>
+#images-menu-container,
+#labellisation-container {
     position: absolute;
-    top: 5vh;
+    top: 7vh;
     left: 0;
 
     width: 100vw;
     height: 95vh;
+}
+
+#labellisation-container {
+    top: 10vh;
 }
 
 .app {
