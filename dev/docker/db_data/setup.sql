@@ -16,8 +16,8 @@ INSERT INTO public.image_sortie (name, id_chantier,current_patch) VALUES
 
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE Patch
 INSERT INTO public.patch (name, id_img_sortie, data, i, j) VALUES
-('Patch1', 1, {}, 0, 0),
-('Patch2', 2, {}, 0, 0);
+('Patch1', 1, '{"key": "value"}', 0, 0),
+('Patch2', 2, '{"key": "value"}', 0, 0);
 
 
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE Catalogue 
