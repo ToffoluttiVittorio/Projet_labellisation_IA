@@ -2,21 +2,21 @@
   <div>
     <h2>STAC File Manager</h2>
 
-    <form @submit.prevent="loadFiles">
+    <form @submit.prevent="loadStac">
       <input type="text" v-model="url" placeholder="Enter URL" />
       <button type="submit">Enter</button>
     </form>
-    <div class="scrollable">
-      <ul>
+    <div id="files" class="scrollable">
+      <!-- <ul>
         <li v-for="file in files" :key="file.url">
-          {{ file.href }}
+          {{ file.url }}
           <input
             type="checkbox"
             v-model="file.checked"
             @change="updateMap(file)"
           />
         </li>
-      </ul>
+      </ul> -->
     </div>
     <button @click="saveProject">Enregistrer le chantier</button>
   </div>
@@ -50,33 +50,70 @@ export default {
   },
   created() {},
   methods: {
-    loadFiles() {
+    loadFiles(elem, ul) {
+      let li = document.createElement("li");
+      ul.appendChild(li);
+      li.innerHTML = ;
+      // this.files.push({
+      //   url: elem.href,
+      //   checked: false,
+      // });
+    },
+    loadFolder(elem) {
+      let index = new STAC.Index();
+      index.initialize(elem.url);
+      let rootNode = index.getRootNode();
+      console.log(rootNode.entry.links);
+
+      rootNode.entry.links.map((elem) => {
+        if (elem.rel === "item") {
+          this.loadFiles(elem);
+        } else if (elem.rel === "child") {
+          // this.loadFolder(elem);
+        }
+      });
+    },
+    loadStac() {
       let index = new STAC.Index();
       index.initialize(this.url);
-      const rootNode = index.getRootNode();
+      let rootNode = index.getRootNode();
       console.log(rootNode.entry.links);
-      this.files = rootNode.entry.links;
+
+      let fileManager = document.getElementById("files");
+      let ul = document.createElement("ul");
+      fileManager.appendChild(ul);
+      rootNode.entry.links.map((elem) => {
+        if (elem.rel === "item") {
+          this.loadFiles(elem, ul);
+        } else if (elem.rel === "child") {
+          // this.loadFolder(elem);
+        }
+      });
     },
-    updateMap(file) {
+    async updateMap(file) {
+      let panAssetHref = "";
+
+      try {
+        const response = await fetch(file.url);
+        const data = await response.json();
+        let assets = data.assets;
+        console.log(assets);
+        panAssetHref = assets.pan
+          ? assets.pan.href
+          : Object.values(assets)[0].href;
+      } catch (error) {
+        console.error("Error:", error);
+      }
+
       if (file.checked) {
         // Add a stacLayer to the map for this file
         // console.log(file.href);
         let stac = new STACLayer({
-          url: file.href,
+          url: file.url,
         });
 
-        let panAssetHref = "";
-
-        fetch(file.href)
-          .then((response) => response.json())
-          .then((data) => {
-            let assets = data.assets;
-            panAssetHref = assets.pan
-              ? assets.pan.href
-              : Object.values(assets)[0].href;
-            this.layers[panAssetHref] = stac;
-          })
-          .catch((error) => console.error("Error:", error));
+        console.log(panAssetHref);
+        this.layers[panAssetHref] = stac;
 
         this.map.map.addLayer(stac);
 
