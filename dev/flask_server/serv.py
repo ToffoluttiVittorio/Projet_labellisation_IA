@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from sqlalchemy.dialects.postgresql import JSONB
@@ -55,6 +55,18 @@ class Patch(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     id_img_sortie = db.Column(db.Integer, db.ForeignKey('image_sortie.id'), nullable=False)
+    data = db.Column(JSONB)
+    i = db.Column(db.Integer)
+    j = db.Column(db.Integer)
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'id_img_sortie': self.id_img_sortie,
+            'data': self.data,
+            'i': self.i,
+            'j': self.j
+        }
 
 class Catalogue(db.Model):
     __tablename__ = 'catalogue'
@@ -167,6 +179,40 @@ def signup():
 
     return {'message': 'Utilisateur créé avec succès'}, 201
 
+@app.route('/save_patch', methods=['POST'])
+def save_patch():
+    data = request.get_json()
+
+    name = data.get('name')
+    id_img_sortie = data.get('id_img_sortie')
+    geoJSON = data.get('data')
+    i = data.get('i')
+    j = data.get('j')
+
+    if not name or not id_img_sortie or not geoJSON or i is None or j is None:
+        return "Error: All fields must be filled", 400
+
+    patch = Patch.query.filter_by(id_img_sortie=id_img_sortie, i=i, j=j).first()
+
+    if patch:
+        # Patch exists, update data
+        patch.data = geoJSON
+    else:
+        # Patch does not exist, create new
+        patch = Patch(name=name, id_img_sortie=id_img_sortie, data=geoJSON, i=i, j=j)
+        db.session.add(patch)
+
+    db.session.commit()
+
+    return "Patch enregistré avec succès"
+
+@app.route('/get_patches', methods=['GET'])
+def get_patches():
+    image_id = request.args.get('image_id')
+
+    patches = Patch.query.filter_by(id_img_sortie=image_id).all()
+
+    return jsonify([patch.to_dict() for patch in patches])
 
 ################################## BDD GESTION ##################################
 
