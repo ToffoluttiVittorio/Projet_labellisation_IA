@@ -45,6 +45,9 @@ CREATE TABLE public.patch (
     name VARCHAR(255) NOT NULL,
     id_img_sortie INT NOT NULL,
     FOREIGN KEY (id_img_sortie) REFERENCES image_sortie(id)
+    data INT;
+    i INT;
+    j INT;
 );
 
 ALTER TABLE IF EXISTS public.patch
