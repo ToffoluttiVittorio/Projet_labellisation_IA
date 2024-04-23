@@ -14,8 +14,8 @@
           @updateMap="updateMap"
         />
       </template>
-      <li v-for="file in folder.files" :key="file.url">
-        {{ file.url }}
+      <li v-for="file in folder.files" :key="file.href">
+        {{ file.href }}
         <input
           type="checkbox"
           v-model="file.checked"

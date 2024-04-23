@@ -56,16 +56,16 @@ export default {
     loadFiles(elem, folder) {
       try {
         folder.files.push({
-          url: elem.href,
+          href: elem.href,
           checked: false,
         });
+        // this.createStacLayer(elem);
       } catch (error) {
         console.error("Error loading files:", error);
       }
     },
     loadFolder(elem, parentFolder) {
       try {
-        console.log("Loading folder:", elem);
         let index = new STAC.Index();
         index.initialize(elem.href);
         let rootNode = index.getRootNode();
@@ -80,7 +80,6 @@ export default {
         let children = rootNode.entry.links.filter(
           (link) => link.rel === "item" || link.rel === "child"
         );
-        console.log(children, elem.url);
         for (let child of children) {
           if (child.rel === "item") {
             this.loadFiles(child, folder);
@@ -123,9 +122,9 @@ export default {
       }
     },
     async updateMap(file) {
-      let panAssetHref = await this.getPanAssetHref(file.url);
+      let panAssetHref = await this.getPanAssetHref(file.href);
       if (file.checked) {
-        let stac = new STACLayer({ url: file.url });
+        let stac = new STACLayer({ url: file.href });
         this.layers[panAssetHref] = stac;
         this.map.map.addLayer(stac);
         stac.on("sourceready", () => {
@@ -138,6 +137,13 @@ export default {
           delete this.layers[panAssetHref];
         }
       }
+    },
+    async createStacLayer(file) {
+      let stac = new STACLayer({ url: file.href });
+      this.map.map.addLayer(stac);
+      stac.on("sourceready", () => {
+        this.map.map.getView().fit(stac.getExtent());
+      });
     },
     async getPanAssetHref(url) {
       try {
