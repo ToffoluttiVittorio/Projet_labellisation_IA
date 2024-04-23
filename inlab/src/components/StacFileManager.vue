@@ -7,16 +7,15 @@
       <button type="submit">Enter</button>
     </form>
     <div id="files" class="scrollable">
-      <!-- <ul>
-        <li v-for="file in files" :key="file.url">
-          {{ file.url }}
-          <input
-            type="checkbox"
-            v-model="file.checked"
-            @change="updateMap(file)"
+      <ul>
+        <template v-for="folder in folders" :key="folder.name">
+          <folder-component
+            :folder="folder"
+            @toggle="toggleFolder"
+            @updateMap="updateMap"
           />
-        </li>
-      </ul> -->
+        </template>
+      </ul>
     </div>
     <button @click="saveProject">Enregistrer le chantier</button>
   </div>
@@ -37,95 +36,117 @@ import * as STAC from "./stac.js";
 import STACLayer from "ol-stac";
 import axios from "axios";
 import { pan } from "ol/interaction/Interaction";
+import FolderComponent from "./FolderComponent.vue";
 
 export default {
   inject: ["map"],
   data() {
     return {
       clicked: false,
-      files: [],
-      url: "https://canada-spot-ortho.s3.amazonaws.com/canada_spot_orthoimages/canada_spot4_orthoimages/S4_2006/catalog.json",
+      folders: [],
+      url: "https://canada-spot-ortho.s3.amazonaws.com/catalog.json",
       layers: {},
     };
   },
   created() {},
   methods: {
-    loadFiles(elem, ul) {
-      let li = document.createElement("li");
-      ul.appendChild(li);
-      li.innerHTML = ;
-      // this.files.push({
-      //   url: elem.href,
-      //   checked: false,
-      // });
+    toggleFolder(folder) {
+      folder.open = !folder.open;
     },
-    loadFolder(elem) {
-      let index = new STAC.Index();
-      index.initialize(elem.url);
-      let rootNode = index.getRootNode();
-      console.log(rootNode.entry.links);
-
-      rootNode.entry.links.map((elem) => {
-        if (elem.rel === "item") {
-          this.loadFiles(elem);
-        } else if (elem.rel === "child") {
-          // this.loadFolder(elem);
+    loadFiles(elem, folder) {
+      try {
+        folder.files.push({
+          url: elem.href,
+          checked: false,
+        });
+      } catch (error) {
+        console.error("Error loading files:", error);
+      }
+    },
+    loadFolder(elem, parentFolder) {
+      try {
+        console.log("Loading folder:", elem);
+        let index = new STAC.Index();
+        index.initialize(elem.href);
+        let rootNode = index.getRootNode();
+        let folder = {
+          name: elem.href,
+          files: [],
+          checked: false,
+          open: false,
+          subfolders: [],
+        };
+        parentFolder.subfolders.push(folder);
+        let children = rootNode.entry.links.filter(
+          (link) => link.rel === "item" || link.rel === "child"
+        );
+        console.log(children, elem.url);
+        for (let child of children) {
+          if (child.rel === "item") {
+            this.loadFiles(child, folder);
+          } else if (child.rel === "child") {
+            this.loadFolder(child, folder);
+          }
         }
-      });
+      } catch (error) {
+        console.error("Error loading folder:", error);
+      }
     },
     loadStac() {
-      let index = new STAC.Index();
-      index.initialize(this.url);
-      let rootNode = index.getRootNode();
-      console.log(rootNode.entry.links);
-
-      let fileManager = document.getElementById("files");
-      let ul = document.createElement("ul");
-      fileManager.appendChild(ul);
-      rootNode.entry.links.map((elem) => {
-        if (elem.rel === "item") {
-          this.loadFiles(elem, ul);
-        } else if (elem.rel === "child") {
-          // this.loadFolder(elem);
+      this.folders = [];
+      try {
+        let index = new STAC.Index();
+        index.initialize(this.url);
+        let rootNode = index.getRootNode();
+        let children = rootNode.entry.links.filter(
+          (link) => link.rel === "item" || link.rel === "child"
+        );
+        let folder = {
+          name: this.url,
+          files: [],
+          checked: false,
+          open: false,
+          subfolders: [],
+        };
+        this.folders.push(folder);
+        for (const child of children) {
+          if (child.rel === "item") {
+            this.loadFiles(child, folder);
+          } else if (child.rel === "child") {
+            this.loadFolder(child, folder);
+          }
         }
-      });
+        console.log("fin");
+        console.log(this.folders);
+      } catch (error) {
+        console.error("Error loading STAC:", error);
+      }
     },
     async updateMap(file) {
-      let panAssetHref = "";
-
-      try {
-        const response = await fetch(file.url);
-        const data = await response.json();
-        let assets = data.assets;
-        console.log(assets);
-        panAssetHref = assets.pan
-          ? assets.pan.href
-          : Object.values(assets)[0].href;
-      } catch (error) {
-        console.error("Error:", error);
-      }
-
+      let panAssetHref = await this.getPanAssetHref(file.url);
       if (file.checked) {
-        // Add a stacLayer to the map for this file
-        // console.log(file.href);
-        let stac = new STACLayer({
-          url: file.url,
-        });
-
-        console.log(panAssetHref);
+        let stac = new STACLayer({ url: file.url });
         this.layers[panAssetHref] = stac;
-
         this.map.map.addLayer(stac);
-
         stac.on("sourceready", () => {
           this.map.map.getView().fit(stac.getExtent());
         });
       } else {
-        let stac = this.layers[panAssetHref]; // Retrieve the layer
+        let stac = this.layers[panAssetHref];
         if (stac) {
           this.map.map.removeLayer(stac);
-          delete this.layers[panAssetHref]; // Remove the layer from the layers object
+          delete this.layers[panAssetHref];
         }
+      }
+    },
+    async getPanAssetHref(url) {
+      try {
+        const response = await axios.get(url);
+        const assets = response.data.assets;
+        return assets.pan ? assets.pan.href : Object.values(assets)[0].href;
+      } catch (error) {
+        console.error("Error fetching asset:", error);
+        throw error;
       }
     },
 
@@ -170,6 +191,9 @@ export default {
           });
         });
     },
+  },
+  components: {
+    FolderComponent,
   },
 };
 </script>
