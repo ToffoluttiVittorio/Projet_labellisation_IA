@@ -1,11 +1,14 @@
 <template>
     <div id="homeview-container">
+        <button @click="logout">Déconnexion</button>
         <div id="mesChantiers">
             <h2>Mes chantiers</h2>
             <div class="scroll-container">
                 <div class="chantiers-container" ref="chantiersContainer">
-                    <div v-for="(chantier, index) in chantiers" :key="index" class="chantier-card" :id="chantier.id">
-                        {{ chantier.name }}
+                    <div v-for="(chantier, index) in chantiers" :key="index" class="chantier-card" :id="chantier.id"
+                        @click="redirectToLabellisation(chantier.id)">
+                        <span>{{ chantier.name }}</span>
+                        <button class="btnCancelChantier" @click="deleteChantier(chantier.id)">X</button>
                     </div>
                 </div>
             </div>
@@ -30,19 +33,43 @@ export default {
     },
     methods: {
         fetchChantiers() {
+            const username = sessionStorage.getItem('username');
             axios.get('http://localhost:5000/data/user/getChantier', {
                 params: {
-                    user_key: 1
+                    username: username
                 }
             })
                 .then(response => {
-
                     console.log(response.data);
                     this.chantiers = response.data.chantier;
                 })
                 .catch(error => {
                     console.error('Erreur lors de la récupération des chantiers :', error);
                 });
+        },
+
+        async deleteChantier(chantierId) {
+            event.stopPropagation();
+            await axios.delete('http://localhost:5000/data/chantier/delete', {
+                params: {
+                    id: chantierId
+                }
+            })
+                .then(response => {
+                    console.log(response.data.message);
+                    this.fetchChantiers();
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la suppression du chantier :', error);
+                });
+        },
+
+        redirectToLabellisation(idChantier) {
+            this.$router.push(`/labellisation/${idChantier}`);
+        },
+        logout() {
+            sessionStorage.clear();
+            this.$router.push(`/login`);
         }
     }
 };
@@ -96,5 +123,11 @@ export default {
     color: #fff;
     font-size: 24px;
     cursor: pointer;
+}
+
+.btnCancelChantier {
+    background-color: aqua;
+    color: white;
+    border: 0;
 }
 </style>

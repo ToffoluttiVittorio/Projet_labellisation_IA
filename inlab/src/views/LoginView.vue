@@ -42,12 +42,27 @@ export default {
             axios.post('http://localhost:5000/data/user/login', userData)
                 .then(response => {
                     console.log(response.data);
+                    sessionStorage.setItem('username', this.username);
+                    // Ajouter l'ID de l'utilisateur à la session
+                    axios.get('http://localhost:5000/data/user/getUserId', {
+                        params: {
+                            username: this.username
+                        }
+                    })
+                        .then(response => {
+                            const userId = response.data.user_id;
+                            sessionStorage.setItem('user_id', userId);
+                            this.$router.push('/');
+                        })
+                        .catch(error => {
+                            console.error('Erreur lors de la récupération de l\'ID de l\'utilisateur :', error);
+                        });
                 })
                 .catch(error => {
                     console.error('Erreur lors de la connexion :', error);
                 });
-
         },
+
         signup() {
             axios.post('http://localhost:5000/data/user/createUser', {
                 username: this.username,
@@ -55,13 +70,27 @@ export default {
             })
                 .then(response => {
                     console.log(response.data.message);
-                    // Gérer la réponse
+                    sessionStorage.setItem('username', this.username);
+
+                    axios.get('http://localhost:5000/data/user/getUserId', {
+                        params: {
+                            username: this.username
+                        }
+                    })
+                        .then(response => {
+                            const userId = response.data.user_id;
+                            sessionStorage.setItem('user_id', userId);
+                            this.$router.push('/');
+                        })
+                        .catch(error => {
+                            console.error('Erreur lors de la récupération de l\'ID de l\'utilisateur :', error);
+                        });
                 })
                 .catch(error => {
                     console.error('Erreur lors de l\'inscription :', error.response.data.message);
-                    // Gérer les erreurs
                 });
         },
+
         toggleMode() {
             this.loginMode = !this.loginMode;
             this.username = '';
