@@ -26,19 +26,21 @@ class Test(db.Model):
 class Chantier(db.Model):
     __tablename__ = 'chantier'
     id = db.Column(db.Integer, primary_key=True)
-    id_style = db.Column(db.Integer, nullable=False)
-    code = db.Column(db.Integer, nullable=False)
     name = db.Column(db.String(255))
+    nomenclature = db.Column(db.Integer) 
     nbr_image = db.Column(db.Integer, nullable=False)
     stac_url = db.Column(db.String(255), nullable=False)
-    user_key = db.Column(db.String(255), db.ForeignKey('user.id'), nullable=False)
+    createur = db.Column(db.String(255), db.ForeignKey('user.id'), nullable=False)
+    annotateur = db.Column(db.String(255), db.ForeignKey('user.id'), nullable=False)
+    reviewer = db.Column(db.String(255), db.ForeignKey('user.id'), nullable=False)
+    message = db.Column(db.String(255))
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 class User(db.Model):
     __tablename__ = 'user'
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(255), nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(255), nullable=False, unique=True)
     password = db.Column(db.String(255), nullable=False)
 
 class Image_sortie(db.Model):
@@ -98,8 +100,13 @@ def create_chantier():
 
 @app.route('/data/user/getChantier', methods=['GET'])
 def get_chantier():
-    chantier = Chantier.query.filter_by(user_key=request.args.get('user_key')).all()
-    return {'chantier': [c.to_dict() for c in chantier]}
+    username = request.args.get('username')
+    user = User.query.filter_by(username=username).first()
+    if user:
+        chantiers = Chantier.query.filter_by(createur=user.id).all()
+        return {'chantier': [c.to_dict() for c in chantiers]}
+    else:
+        return {'error': 'Utilisateur introuvable'}, 404
 
 @app.route('/data/chantier/getImages', methods=['GET'])
 def get_images():
@@ -144,7 +151,8 @@ def create_cog():
 @app.route('/data/user/getUser', methods=['GET'])
 def get_users():
     users = User.query.all()
-    return {'users': [u.username for u in users]}
+    user_data = [{'id': user.id, 'username': user.username} for user in users]
+    return {'users': user_data}
     
 
 @app.route('/data/user/login', methods=['POST'])
@@ -178,6 +186,36 @@ def signup():
     db.session.commit()
 
     return {'message': 'Utilisateur créé avec succès'}, 201
+
+@app.route('/data/user/getUserId', methods=['GET'])
+def get_user_id():
+    username = request.args.get('username')
+    if not username:
+        return {'error': 'No username provided'}, 400
+    
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return {'error': 'User not found'}, 404
+
+    return {'user_id': user.id}
+
+@app.route('/data/chantier/delete', methods=['DELETE'])
+def delete_chantier():
+    chantier_id = request.args.get('id')
+    if chantier_id:
+        images = Image_sortie.query.filter_by(id_chantier=chantier_id).all()
+        for image in images:
+            db.session.delete(image)
+       
+        chantier = Chantier.query.get(chantier_id)
+        if chantier:
+            db.session.delete(chantier)
+            db.session.commit()
+            return {'message': 'Chantier supprimé avec succès'}, 200
+        else:
+            return {'error': 'Chantier introuvable'}, 404
+    else:
+        return {'error': 'ID du chantier non fourni'}, 400
 
 @app.route('/save_patch', methods=['POST'])
 def save_patch():
@@ -214,6 +252,7 @@ def get_patches():
 
     return jsonify([patch.to_dict() for patch in patches])
 
+
 ################################## BDD GESTION ##################################
 
 class Test_Gestion(db.Model):
@@ -222,24 +261,19 @@ class Test_Gestion(db.Model):
     id = db.Column('id', db.Integer, primary_key=True)
     name = db.Column('name', db.String(255), nullable=False)
 
+class Nomenclature(db.Model):
+    __bind_key__ = 'db2'
+    __tablename__ = 'nomenclature'
+    id = db.Column(db.Integer, primary_key=True)
+    nom = db.Column(db.String(255), nullable=False)
+
 class Style(db.Model):
     __bind_key__ = 'db2'
     __tablename__ = 'style'
     id = db.Column(db.Integer, primary_key=True)
+    nomenclature = db.Column(db.Integer, db.ForeignKey('nomenclature.id'))
     nom = db.Column(db.String(255), nullable=False)
-    couleur_de_fond = db.Column(db.Integer)
-    type_de_ligne = db.Column(db.String(255))
-    taille_de_ligne = db.Column(db.Integer)
-    transparence = db.Column(db.Integer)
-
-class Nomenclature(db.Model):
-    __bind_key__ = 'db2'
-    __tablename__ = 'nomenclature'
-    id_style = db.Column(db.Integer, nullable=False)
-    id = db.Column(db.Integer, primary_key=True)
-    libellé = db.Column(db.String(255), nullable=False)
-    couleur = db.Column(db.Integer, nullable=False)
-    style_id = db.Column(db.Integer, db.ForeignKey('style.id'), nullable=False)
+    couleur = db.Column(db.String(255), nullable=False)
 
 @app.route('/gestion/test', methods=['POST'])
 def create_test_gestion():
@@ -249,19 +283,33 @@ def create_test_gestion():
     db.session.commit()
     return {'id': test.id}, 201
 
-@app.route('/gestion/style', methods=['POST'])
-def create_style():
-    style = Style(**request.json)
-    db.session.add(style)
-    db.session.commit()
-    return {'id': style.id}, 201
-
 @app.route('/gestion/nomenclature', methods=['POST'])
 def create_nomenclature():
-    nomenclature = Nomenclature(**request.json)
+    nom = request.json['nom']
+    champs = request.json['champs']
+    
+    nomenclature = Nomenclature(nom=nom)
     db.session.add(nomenclature)
     db.session.commit()
+    
+    for champ, couleur in champs:
+        style = Style(nomenclature=nomenclature.id, nom=champ, couleur=couleur)
+        db.session.add(style)
+    db.session.commit()
+
     return {'id': nomenclature.id}, 201
+    
+@app.route('/gestion/nomenclatures', methods=['GET'])
+def get_nomenclatures_and_styles():
+    nomenclatures = Nomenclature.query.all()
+    nomenclatures_with_styles = []
+    for nomenclature in nomenclatures:
+        styles = Style.query.filter_by(nomenclature=nomenclature.id).all()
+        styles_json = [{'id': style.id, 'nom': style.nom, 'couleur': style.couleur} for style in styles]
+        nomenclature_json = {'id': nomenclature.id, 'nom': nomenclature.nom, 'styles': styles_json}
+        nomenclatures_with_styles.append(nomenclature_json)
+    return jsonify(nomenclatures_with_styles)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

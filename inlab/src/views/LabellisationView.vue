@@ -90,6 +90,7 @@
       </div>
       <p>Id récupéré depuis l'URL : {{ id }}</p>
     </div>
+
   </div>
   <div class="button-container">
     <button @click="moveLeft" :disabled="i === 0">←</button>
@@ -99,6 +100,7 @@
   </div>
 
   <canvas id="previsualisation" ref="canvasPrevisu"></canvas>
+
 </template>
 
 <script>
@@ -613,6 +615,7 @@ export default {
       return neighborsMap;
     },
 
+
     traversePixelsInOrder(neighborsMap, width) {
       const visited = new Set();
       const orderedPixels = [];
@@ -927,6 +930,7 @@ export default {
 </script>
 
 <style>
+
 #loading-div {
   position: absolute;
   top: 40px;
@@ -958,9 +962,20 @@ div.button-container {
   height: 95vh;
 }
 
+/* div.button-container {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+} */
+
 #labellisation-container {
   top: 10vh;
 }
+
 
 .app {
   height: 100%;

@@ -1,5 +1,6 @@
 <template>
     <div id="homeview-container">
+        <button @click="logout">Déconnexion</button>
         <div id="mesChantiers">
             <h2>Mes chantiers</h2>
             <div class="scroll-container">
@@ -32,9 +33,10 @@ export default {
     },
     methods: {
         fetchChantiers() {
+            const username = sessionStorage.getItem('username');
             axios.get('http://localhost:5000/data/user/getChantier', {
                 params: {
-                    user_key: 1
+                    username: username
                 }
             })
                 .then(response => {
@@ -47,6 +49,7 @@ export default {
         },
 
         async deleteChantier(chantierId) {
+            event.stopPropagation();
             await axios.delete('http://localhost:5000/data/chantier/delete', {
                 params: {
                     id: chantierId
@@ -62,8 +65,11 @@ export default {
         },
 
         redirectToLabellisation(idChantier) {
-            console.log(idChantier);
             this.$router.push(`/labellisation/${idChantier}`);
+        },
+        logout() {
+            sessionStorage.clear();
+            this.$router.push(`/login`);
         }
     }
 };

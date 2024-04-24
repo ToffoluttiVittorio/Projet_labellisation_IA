@@ -3,7 +3,6 @@ import { createRouter, createWebHistory } from "vue-router";
 import MapView from "../views/MapView.vue";
 import HomeView from "../views/HomeView.vue";
 import LabellisationView from "../views/LabellisationView.vue";
-import PatchView from "../views/PatchView.vue";
 import LoginView from "../views/LoginView.vue";
 
 const router = createRouter({
@@ -20,11 +19,6 @@ const router = createRouter({
       component: MapView,
     },
     {
-      path: "/patch",
-      name: "patch",
-      component: PatchView,
-    },
-    {
       path: "/login",
       name: "login",
       component: LoginView,
@@ -36,6 +30,15 @@ const router = createRouter({
       props: true,
     }
   ],
+});
+
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = sessionStorage.getItem('username');
+  if (!isAuthenticated && to.path !== '/login') {
+    next('/login');
+  } else {
+    next();
+  }
 });
 
 export default router;
