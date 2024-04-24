@@ -9,7 +9,11 @@
       <ul>
         <li v-for="file in files" :key="file.url">
           {{ file.href }}
-          <input type="checkbox" v-model="file.checked" @change="updateMap(file)" />
+          <input
+            type="checkbox"
+            v-model="file.checked"
+            @change="updateMap(file)"
+          />
         </li>
       </ul>
     </div>
@@ -20,39 +24,62 @@
     <form @submit.prevent="saveChantier">
       <div class="form-group">
         <label for="nomChantier">Nom du chantier : </label>
-        <input type="text" id="nomChantier" v-model="nomChantier">
+        <input type="text" id="nomChantier" v-model="nomChantier" />
       </div>
       <div class="form-group">
         <label for="labelliser">À annoter par : </label>
         <select id="labelliser" v-model="labelliser">
           <option value="">Sélectionner un utilisateur</option>
-          <option v-for="user in users" :key="user.id" :value="user.username">{{ user.username }}</option>
+          <option v-for="user in users" :key="user.id" :value="user.username">
+            {{ user.username }}
+          </option>
         </select>
       </div>
       <div class="form-group">
         <label for="review">À review par : </label>
         <select id="review" v-model="review">
           <option value="">Sélectionner un utilisateur</option>
-          <option v-for="user in users" :key="user.id" :value="user.username">{{ user.username }}</option>
+          <option v-for="user in users" :key="user.id" :value="user.username">
+            {{ user.username }}
+          </option>
         </select>
       </div>
       <div id="nomenclature-container" class="form-group">
         <label for="nomenclature">Nomenclature:</label>
-        <input type="text" id="nomenclature" v-model="nomenclature">
+        <input type="text" id="nomenclature" v-model="nomenclature" />
 
         <div id="nomenclature">
           <div id="nomenclature-select">
-            <label for="nomenclature">Sélectionnez une nomenclature existante :</label>
+            <label for="nomenclature"
+              >Sélectionnez une nomenclature existante :</label
+            >
             <select id="nomenclature" @change="getStyles">
-              <option value="" disabled selected>Choisissez une nomenclature</option>
-              <option v-for="nomenclature in nomenclatures" :value="nomenclature.id">{{ nomenclature.nom }}</option>
+              <option value="" disabled selected>
+                Choisissez une nomenclature
+              </option>
+              <option
+                v-for="nomenclature in nomenclatures"
+                :value="nomenclature.id"
+              >
+                {{ nomenclature.nom }}
+              </option>
             </select>
           </div>
           <form @submit.prevent="handleCreaNomSubmit">
             <label for="textContent">Créer un champs :</label>
-            <input type="text" id="textContent" name="textContent" v-model="textContent">
+            <input
+              type="text"
+              id="textContent"
+              name="textContent"
+              v-model="textContent"
+            />
             <label for="buttonColor">Couleur:</label>
-            <input type="color" id="buttonColor" name="buttonColor" v-model="buttonColor">
+            <input
+              type="color"
+              id="buttonColor"
+              name="buttonColor"
+              v-model="buttonColor"
+            />
             <button type="submit">Créer Bouton</button>
           </form>
           <div id="table-container">
@@ -68,7 +95,7 @@
                 <tr v-for="(field, index) in fields" :key="index">
                   <td>{{ index + 1 }}</td>
                   <td :style="{ backgroundColor: field[1] }">{{ field[0] }}</td>
-                  <td><button @click="removeField(index)">Supprimer</button> </td>
+                  <td @click="removeField(index)">X</td>
                 </tr>
               </tbody>
             </table>
@@ -101,8 +128,8 @@ export default {
       nomChantier: "",
       nomenclature: "",
       fields: [],
-      textContent: '',
-      buttonColor: '',
+      textContent: "",
+      buttonColor: "",
       nomenclatures: [],
       selectedNomenclatureId: null,
     };
@@ -112,50 +139,62 @@ export default {
     this.getNomenclaturesAndStyles();
   },
   methods: {
-
     removeField(index) {
       this.fields.splice(index, 1);
     },
 
     getNomenclaturesAndStyles() {
-      axios.get('http://localhost:5000/gestion/nomenclatures')
-        .then(response => {
+      axios
+        .get("http://localhost:5000/gestion/nomenclatures")
+        .then((response) => {
           this.nomenclatures = response.data;
         })
-        .catch(error => {
-          console.error('Erreur lors de la récupération des nomenclatures et des styles :', error);
+        .catch((error) => {
+          console.error(
+            "Erreur lors de la récupération des nomenclatures et des styles :",
+            error
+          );
         });
     },
     getStyles(event) {
       const selectedNomenclatureId = event.target.value;
-      const selectedNomenclature = this.nomenclatures.find(nomenclature => nomenclature.id === parseInt(selectedNomenclatureId));
+      const selectedNomenclature = this.nomenclatures.find(
+        (nomenclature) => nomenclature.id === parseInt(selectedNomenclatureId)
+      );
       if (selectedNomenclature) {
-        this.fields = selectedNomenclature.styles.map(style => [style.nom, style.couleur]);
+        this.fields = selectedNomenclature.styles.map((style) => [
+          style.nom,
+          style.couleur,
+        ]);
       } else {
         this.fields = [];
       }
     },
 
     handleCreaNomSubmit() {
-      if (this.textContent == '' && this.buttonColor == '') {
-        return
+      if (this.textContent == "" || this.buttonColor == "") {
+        return;
       }
       this.fields.push([this.textContent, this.buttonColor]);
-      this.textContent = '';
-      this.buttonColor = '';
+      this.textContent = "";
+      this.buttonColor = "";
     },
 
     fetchUsers() {
-      axios.get('http://localhost:5000/data/user/getUser')
-        .then(response => {
+      axios
+        .get("http://localhost:5000/data/user/getUser")
+        .then((response) => {
           this.users = response.data.users;
         })
-        .catch(error => {
-          console.error('Erreur lors de la récupération des utilisateurs :', error);
+        .catch((error) => {
+          console.error(
+            "Erreur lors de la récupération des utilisateurs :",
+            error
+          );
         });
     },
     saveProject() {
-      const saveContainer = document.querySelector('.save-container');
+      const saveContainer = document.querySelector(".save-container");
       if (saveContainer) {
         saveContainer.style.zIndex = 100;
         saveContainer.style.opacity = 1;
@@ -203,9 +242,11 @@ export default {
       }
     },
     saveChantier() {
-      const user_id = sessionStorage.getItem('user_id');
-      const annotateur = this.users.find(user => user.username === this.labelliser);
-      const reviewer = this.users.find(user => user.username === this.review);
+      const user_id = sessionStorage.getItem("user_id");
+      const annotateur = this.users.find(
+        (user) => user.username === this.labelliser
+      );
+      const reviewer = this.users.find((user) => user.username === this.review);
 
       if (this.clicked || !annotateur || !reviewer) {
         return; // Si oui, ne rien faire ou si les utilisateurs ne sont pas sélectionnés
@@ -218,12 +259,13 @@ export default {
         layers: Object.keys(this.layers),
       };
 
-      axios.post('http://localhost:5000/gestion/nomenclature', {
-        nom: this.nomenclature,
-        champs: this.fields
-      })
-        .then(response => {
-          console.log('Nomenclature créée');
+      axios
+        .post("http://localhost:5000/gestion/nomenclature", {
+          nom: this.nomenclature,
+          champs: this.fields,
+        })
+        .then((response) => {
+          console.log("Nomenclature créée");
           const nomenclatureId = response.data.id;
 
           axios
@@ -235,7 +277,7 @@ export default {
               createur: user_id,
               annotateur: annotateur.id,
               reviewer: reviewer.id,
-              message: ''
+              message: "",
             })
             .then((response) => {
               // Enregistrez chaque couche comme une image_sortie
@@ -255,14 +297,13 @@ export default {
                 });
               });
             });
-
-
-
         })
-        .catch(error => {
-          console.error('Erreur lors de la création de la nomenclature :', error);
+        .catch((error) => {
+          console.error(
+            "Erreur lors de la création de la nomenclature :",
+            error
+          );
         });
-
     },
   },
 };
@@ -293,9 +334,6 @@ export default {
   justify-content: center;
 }
 
-.save-container form div,
-.save-container form button {}
-
 .stac-container {
   position: absolute;
   left: 0;
@@ -319,23 +357,17 @@ li {
 }
 
 #nomenclature-container {
-
   display: flex;
   flex-direction: column;
-
 }
 
 #nomenclature {
-
   display: flex;
   align-items: center;
-
 }
 
 #nomenclature form {
-
   display: flex;
   align-items: center;
-
 }
 </style>
