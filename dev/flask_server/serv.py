@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from sqlalchemy.dialects.postgresql import JSONB
@@ -31,14 +31,14 @@ class Chantier(db.Model):
     name = db.Column(db.String(255))
     nbr_image = db.Column(db.Integer, nullable=False)
     stac_url = db.Column(db.String(255), nullable=False)
-    user_key = db.Column(db.String(255), db.ForeignKey('user.username'), nullable=False)
+    user_key = db.Column(db.String(255), db.ForeignKey('user.id'), nullable=False)
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 class User(db.Model):
     __tablename__ = 'user'
-    id = db.Column(db.Integer)
-    username = db.Column(db.String(255), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(255), nullable=False)
     password = db.Column(db.String(255), nullable=False)
 
 class Image_sortie(db.Model):
@@ -55,6 +55,18 @@ class Patch(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     id_img_sortie = db.Column(db.Integer, db.ForeignKey('image_sortie.id'), nullable=False)
+    data = db.Column(JSONB)
+    i = db.Column(db.Integer)
+    j = db.Column(db.Integer)
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'id_img_sortie': self.id_img_sortie,
+            'data': self.data,
+            'i': self.i,
+            'j': self.j
+        }
 
 class Catalogue(db.Model):
     __tablename__ = 'catalogue'
@@ -128,6 +140,79 @@ def create_cog():
     db.session.add(cog)
     db.session.commit()
     return {'id': cog.id}, 201
+
+@app.route('/data/user/getUser', methods=['GET'])
+def get_users():
+    users = User.query.all()
+    return {'users': [u.username for u in users]}
+    
+
+@app.route('/data/user/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+
+    user = User.query.filter_by(username=username).first()
+    if user:
+        if user.password == password:
+            return {'message': 'Connexion réussie'}, 200
+        else:
+            return {'error': 'Mot de passe incorrect'}, 401
+    else:
+        return {'error': 'Nom d\'utilisateur introuvable'}, 404    
+    
+    
+@app.route('/data/user/createUser', methods=['POST'])
+def signup():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+
+    existing_user = User.query.filter_by(username=username).first()
+    if existing_user:
+        return {'message': 'Nom d\'utilisateur déjà pris'}, 400
+
+    new_user = User(username=username, password=password)
+    db.session.add(new_user)
+    db.session.commit()
+
+    return {'message': 'Utilisateur créé avec succès'}, 201
+
+@app.route('/save_patch', methods=['POST'])
+def save_patch():
+    data = request.get_json()
+
+    name = data.get('name')
+    id_img_sortie = data.get('id_img_sortie')
+    geoJSON = data.get('data')
+    i = data.get('i')
+    j = data.get('j')
+
+    if not name or not id_img_sortie or not geoJSON or i is None or j is None:
+        return "Error: All fields must be filled", 400
+
+    patch = Patch.query.filter_by(id_img_sortie=id_img_sortie, i=i, j=j).first()
+
+    if patch:
+        # Patch exists, update data
+        patch.data = geoJSON
+    else:
+        # Patch does not exist, create new
+        patch = Patch(name=name, id_img_sortie=id_img_sortie, data=geoJSON, i=i, j=j)
+        db.session.add(patch)
+
+    db.session.commit()
+
+    return "Patch enregistré avec succès"
+
+@app.route('/get_patches', methods=['GET'])
+def get_patches():
+    image_id = request.args.get('image_id')
+
+    patches = Patch.query.filter_by(id_img_sortie=image_id).all()
+
+    return jsonify([patch.to_dict() for patch in patches])
 
 ################################## BDD GESTION ##################################
 

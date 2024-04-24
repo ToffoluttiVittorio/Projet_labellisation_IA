@@ -8,18 +8,19 @@
 <style scoped>
 .container {
   display: flex;
+  overflow: None;
 }
 
 .stacReader {
   width: 25%;
-  height: 100vh;
+  height: 95vh;
   overflow: auto;
   border-right: 1px solid #ccc;
 }
 
 #map {
   width: 75%;
-  height: 100vh;
+  height: 95vh;
 }
 </style>
 
@@ -71,10 +72,6 @@ export default {
     stac.on("sourceready", () => {
       this.map.getView().fit(stac.getExtent());
     });
-
-    console.log(this.map);
-    console.log("map mounted");
-    console.log(this.map.getLayers().getArray());
   },
 };
 </script>

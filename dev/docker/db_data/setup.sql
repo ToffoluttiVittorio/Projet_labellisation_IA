@@ -15,9 +15,9 @@ INSERT INTO public.image_sortie (name, id_chantier,current_patch) VALUES
 ('https://storage.googleapis.com/open-cogs/stac-examples/20201211_223832_CS2.tif', 1,'{1, 2}');
 
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE Patch
-INSERT INTO public.patch (name, id_img_sortie) VALUES
-('Patch1', 1),
-('Patch2', 2);
+INSERT INTO public.patch (name, id_img_sortie, data, i, j) VALUES
+('Patch1', 1, '{"key": "value"}', 0, 0),
+('Patch2', 2, '{"key": "value"}', 0, 0);
 
 
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE Catalogue 
@@ -29,3 +29,4 @@ INSERT INTO public.catalogue (name, data) VALUES
 INSERT INTO public.cog (name, data, id_catalogue) VALUES
 ('COG1', '{"key": "value"}', 1),
 ('COG2', '{"key": "value"}', 2);
+

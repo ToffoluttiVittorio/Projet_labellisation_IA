@@ -44,7 +44,10 @@ CREATE TABLE public.patch (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     id_img_sortie INT NOT NULL,
-    FOREIGN KEY (id_img_sortie) REFERENCES image_sortie(id)
+    FOREIGN KEY (id_img_sortie) REFERENCES image_sortie(id),
+    data JSON,
+    i INT,
+    j INT
 );
 
 ALTER TABLE IF EXISTS public.patch
