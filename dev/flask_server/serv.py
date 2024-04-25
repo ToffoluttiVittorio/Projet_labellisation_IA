@@ -98,15 +98,34 @@ def create_chantier():
     db.session.commit()
     return {'id': chantier.id}, 201
 
-@app.route('/data/user/getChantier', methods=['GET'])
-def get_chantier():
-    username = request.args.get('username')
+@app.route('/data/user/getChantier/createur/<username>', methods=['GET'])
+def get_chantier_createur(username):
     user = User.query.filter_by(username=username).first()
     if user:
         chantiers = Chantier.query.filter_by(createur=user.id).all()
         return {'chantier': [c.to_dict() for c in chantiers]}
     else:
         return {'error': 'Utilisateur introuvable'}, 404
+        
+@app.route('/data/user/getChantier/annotateur/<username>', methods=['GET'])
+def get_chantier_annotateur(username):
+    user = User.query.filter_by(username=username).first()
+    if user:
+        chantiers = Chantier.query.filter_by(annotateur=user.id).all()
+        return {'chantier': [c.to_dict() for c in chantiers]}
+    else:
+        return {'error': 'Utilisateur introuvable'}, 404
+
+@app.route('/data/user/getChantier/reviewer/<username>', methods=['GET'])
+def get_chantier_reviewer(username):
+    user = User.query.filter_by(username=username).first()
+    if user:
+        chantiers = Chantier.query.filter_by(reviewer=user.id).all()
+        return {'chantier': [c.to_dict() for c in chantiers]}
+    else:
+        return {'error': 'Utilisateur introuvable'}, 404
+
+
 
 @app.route('/data/chantier/getImages', methods=['GET'])
 def get_images():
