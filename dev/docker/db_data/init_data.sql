@@ -24,10 +24,11 @@ CREATE TABLE public.chantier (
     createur INT NOT NULL,
     annotateur INT NOT NULL,
     reviewer INT NOT NULL,
-    message VARCHAR(255),
+    message VARCHAR,
     FOREIGN KEY (createur) REFERENCES "user"(id),
     FOREIGN KEY (annotateur) REFERENCES "user"(id),
-    FOREIGN KEY (reviewer) REFERENCES "user"(id)
+    FOREIGN KEY (reviewer) REFERENCES "user"(id),
+    reviewed BOOLEAN
 );
 
 ALTER TABLE IF EXISTS public.chantier
@@ -51,8 +52,10 @@ CREATE TABLE public.patch (
     FOREIGN KEY (id_img_sortie) REFERENCES image_sortie(id),
     data JSON,
     i INT,
-    j INT
+    j INT,
+    segmentation_value DOUBLE PRECISION
 );
+
 
 ALTER TABLE IF EXISTS public.patch
 	OWNER to postgres;

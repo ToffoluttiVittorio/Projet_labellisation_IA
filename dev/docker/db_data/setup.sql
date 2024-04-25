@@ -7,10 +7,10 @@ INSERT INTO public.user (username,password) VALUES
 
 
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE Chantier
-INSERT INTO public.Chantier (name, nomenclature, nbr_image, stac_url, createur, annotateur, reviewer, message) VALUES
-('Yzernay', 1, 2, 'https://exemple.com/chantier1', 1, 2, 3, 'ras'),
-('Cherbourg', 2, 1, 'https://exemple.com/chantier1', 1, 3, 4, 'tout à refaire'),
-('Paris', 1, 1, 'https://exemple.com/chantier2', 2, 1, 3, 'bon à jeter');
+INSERT INTO public.Chantier (name, nomenclature, nbr_image, stac_url, createur, annotateur, reviewer, message, reviewed) VALUES
+('Yzernay', 1, 2, 'https://exemple.com/chantier1', 1, 2, 3, 'ras',false),
+('Cherbourg', 2, 1, 'https://exemple.com/chantier1', 1, 3, 4, 'tout à refaire',false),
+('Paris', 1, 1, 'https://exemple.com/chantier2', 2, 1, 3, 'bon à jeter',true);
 
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE Image_sortie
 INSERT INTO public.image_sortie (name, id_chantier,current_patch) VALUES
@@ -18,9 +18,9 @@ INSERT INTO public.image_sortie (name, id_chantier,current_patch) VALUES
 ('https://storage.googleapis.com/open-cogs/stac-examples/20201211_223832_CS2.tif', 1,'{1, 2}');
 
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE Patch
-INSERT INTO public.patch (name, id_img_sortie, data, i, j) VALUES
-('Patch1', 1, '{"key": "value"}', 0, 0),
-('Patch2', 2, '{"key": "value"}', 0, 0);
+INSERT INTO public.patch (name, id_img_sortie, data, i, j, segmentation_value) VALUES
+('image_1_patch_0_0', 1, '{"key": "value"}', 0, 0, 0.395961707746479),
+('image_2_patch_0_0', 2, '{"key": "value"}', 0, 0, 0.270961707746479);
 
 
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE Catalogue 

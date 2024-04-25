@@ -30,7 +30,6 @@ class Chantier(db.Model):
     nomenclature = db.Column(db.Integer) 
     nbr_image = db.Column(db.Integer, nullable=False)
     stac_url = db.Column(db.String(255), nullable=False)
-    user_key = db.Column(db.String(255), db.ForeignKey('user.id'), nullable=False)
     createur = db.Column(db.String(255), db.ForeignKey('user.id'), nullable=False)
     annotateur = db.Column(db.String(255), db.ForeignKey('user.id'), nullable=False)
     reviewer = db.Column(db.String(255), db.ForeignKey('user.id'), nullable=False)
