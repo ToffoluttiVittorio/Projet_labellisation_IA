@@ -11,7 +11,7 @@
         <template v-for="folder in folders" :key="folder.name">
           <folder-component
             :folder="folder"
-            @toggle="toggleFolder"
+            @toggleFolder="toggleFolder"
             @updateMap="updateMap"
           />
         </template>
@@ -37,6 +37,8 @@ import STACLayer from "ol-stac";
 import axios from "axios";
 import { pan } from "ol/interaction/Interaction";
 import FolderComponent from "./FolderComponent.vue";
+import { containsCoordinate, extend } from "ol/extent";
+import { Style, Stroke } from "ol/style";
 
 export default {
   inject: ["map"],
@@ -44,22 +46,28 @@ export default {
     return {
       clicked: false,
       folders: [],
-      url: "https://canada-spot-ortho.s3.amazonaws.com/catalog.json",
+      // url: "https://canada-spot-ortho.s3.amazonaws.com/catalog.json",
+      url: "https://canada-spot-ortho.s3.amazonaws.com/canada_spot_orthoimages/canada_spot5_orthoimages/S5_2005/catalog.json",
       layers: {},
+      selectedLayers: {},
     };
   },
   created() {},
   methods: {
-    toggleFolder(folder) {
-      folder.open = !folder.open;
+    async toggleFolder(folder) {
+      if (!folder.opened) {
+        for (let file of folder.files) {
+          await this.createStacLayer(file, folder);
+        }
+        folder.opened = true;
+      }
     },
-    loadFiles(elem, folder) {
+    loadFiles(file, folder) {
       try {
         folder.files.push({
-          href: elem.href,
+          href: file.href,
           checked: false,
         });
-        // this.createStacLayer(elem);
       } catch (error) {
         console.error("Error loading files:", error);
       }
@@ -73,13 +81,14 @@ export default {
           name: elem.href,
           files: [],
           checked: false,
-          open: false,
+          opened: false,
           subfolders: [],
         };
         parentFolder.subfolders.push(folder);
         let children = rootNode.entry.links.filter(
           (link) => link.rel === "item" || link.rel === "child"
         );
+        console.log(children);
         for (let child of children) {
           if (child.rel === "item") {
             this.loadFiles(child, folder);
@@ -104,7 +113,7 @@ export default {
           name: this.url,
           files: [],
           checked: false,
-          open: false,
+          opened: false,
           subfolders: [],
         };
         this.folders.push(folder);
@@ -115,8 +124,6 @@ export default {
             this.loadFolder(child, folder);
           }
         }
-        console.log("fin");
-        console.log(this.folders);
       } catch (error) {
         console.error("Error loading STAC:", error);
       }
@@ -125,26 +132,62 @@ export default {
       let panAssetHref = await this.getPanAssetHref(file.href);
       if (file.checked) {
         let stac = new STACLayer({ url: file.href });
-        this.layers[panAssetHref] = stac;
+        stac.boundsStyle_.stroke_.color_ = "#FF0000";
+        this.selectedLayers[panAssetHref] = stac;
         this.map.map.addLayer(stac);
-        stac.on("sourceready", () => {
-          this.map.map.getView().fit(stac.getExtent());
-        });
+        // stac.on("sourceready", () => {
+        //   this.map.map.getView().fit(stac.getExtent());
+        // });
       } else {
-        let stac = this.layers[panAssetHref];
+        let stac = this.selectedLayers[panAssetHref];
         if (stac) {
           this.map.map.removeLayer(stac);
-          delete this.layers[panAssetHref];
+          delete this.selectedLayers[panAssetHref];
         }
       }
     },
-    async createStacLayer(file) {
+    intersectsCoordinate(extent, coordinate) {
+      return containsCoordinate(extent, coordinate);
+    },
+    async createStacLayer(file, folder) {
+      let panAssetHref = await this.getPanAssetHref(file.href);
       let stac = new STACLayer({ url: file.href });
+      stac.boundsStyle_.stroke_.color_ = "#3399CC";
+      this.layers[panAssetHref] = stac;
       this.map.map.addLayer(stac);
       stac.on("sourceready", () => {
-        this.map.map.getView().fit(stac.getExtent());
+        this.map.map.on("click", (event) => {
+          if (this.intersectsCoordinate(stac.getExtent(), event.coordinate)) {
+            this.selectStacLayer(stac, folder);
+          }
+        });
       });
     },
+    async removeStacLayer(file) {
+      let panAssetHref = await this.getPanAssetHref(file.href);
+      let stac = this.layers[panAssetHref];
+      if (stac) {
+        this.map.map.removeLayer(stac);
+        delete this.layers[panAssetHref];
+      }
+    },
+
+    async selectStacLayer(stac, folder) {
+      let fileUrl = stac.getData()._url;
+      // let panAssetHref = await this.getPanAssetHref(fileUrl);
+      // console.log("Selected STACLayer:", stac);
+      // console.log("Selected STACLayer assets: ", stac.getAssets());
+      // console.log("Selected STACLayer extent:", stac.getExtent());
+      // console.log("Selected STACLayer properties:", stac.getData()._url);
+      // console.log(folder);
+      folder.files.forEach((file) => {
+        if (file.href === fileUrl) {
+          file.checked = !file.checked;
+          this.updateMap(file);
+        }
+      });
+    },
+
     async getPanAssetHref(url) {
       try {
         const response = await axios.get(url);
@@ -158,13 +201,12 @@ export default {
 
     saveProject() {
       if (this.clicked) {
-        return; // Si oui, ne rien faire
+        return;
       }
-      // Marquer le clic comme effectué
       this.clicked = true;
 
       let project = {
-        layers: Object.keys(this.layers),
+        layers: Object.keys(this.selectedLayers),
       };
       console.log(project);
 
