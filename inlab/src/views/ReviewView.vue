@@ -9,38 +9,19 @@
   </div>
   <div id="loading-div" v-if="isLoading">Loading GeoTIFF...</div>
 
-
   <div id="labellisation-container">
     <div class="app" id="app">
       <div class="app-header">
-        <input type="range" min="0" max="1" step="0.01" value="0.2" id="sliderOpacity" @input="updateOpacity" />
-        <button @click="exportImage">exporter</button>
-        <button @click="vectorize">vectorize</button>
-      </div>
-
-      <div id="table-container">
-        <table id="table-nom">
-          <thead>
-            <tr>
-              <th>Index</th>
-              <th>Nom du champ</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(field, index) in fields" :key="index">
-              <td>{{ index + 1 }}</td>
-              <td @click="updateClassColorAndName(field[0], field[1])" :style="{ backgroundColor: field[1] }">{{
-                field[0] }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="button-container">
-        <button @click="moveLeft" :disabled="i === 0">←</button>
-        <button @click="moveUp" :disabled="j === 0">↑</button>
-        <button @click="moveRight" :disabled="i === numPatchesX - 1">→</button>
-        <button @click="moveDown" :disabled="j === numPatchesY - 1">↓</button>
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value="0.0"
+          id="sliderOpacity"
+          ref="sliderOpacity"
+          @input="updateOpacity"
+        />
       </div>
 
       <div class="app-body">
@@ -53,11 +34,12 @@
             step="any"
             class="slider"
             id="slider"
+            ref="slider"
             list="markers"
             v-model="sliderValue"
           />
           <div class="slider-values">
-            {{ parseFloat(sliderValue).toFixed(2) }}
+            {{ parseFloat(sliderValue) }}
           </div>
         </div>
         <div class="canvas-container">
@@ -66,12 +48,36 @@
         </div>
       </div>
     </div>
-
   </div>
-
-
-  <canvas id="previsualisation" ref="canvasPrevisu"></canvas>
-
+  <canvas id="canvasGeojson" ref="canvasGeojson"></canvas>
+  <div class="textbox-container">
+    <textarea class="textbox" ref="textbox" v-model="reviewText"></textarea>
+  </div>
+  <button
+    id="nextPatchButton"
+    :disabled="isNextPatchDisabled"
+    @click="setupFileInput"
+  >
+    Prochain patch
+  </button>
+  <div class="review-button-container">
+    <button :disabled="isAcceptedDisabled" @click="accepter">Accepter</button>
+    <button :disabled="isRefusedDisabled" @click="refuser">Refuser</button>
+  </div>
+  <div>
+    <progress
+      id="progressPatch"
+      :max="totalNumberOfPatches"
+      :value="numberOfPatches"
+    ></progress>
+  </div>
+  <div>
+    <progress
+      id="progressImage"
+      :max="numImages"
+      :value="idxImage + 1"
+    ></progress>
+  </div>
 </template>
 
 <script>
@@ -122,7 +128,7 @@ async function getImageMetadata(image, offsetX, offsetY, patchSize) {
 }
 
 export default {
-  name: "LabellisationView",
+  name: "ReviewView",
   props: {
     id: {
       type: Number,
@@ -131,17 +137,31 @@ export default {
   },
   data() {
     return {
+      init: true,
+      isNextPatchDisabled: false,
+      isAcceptedDisabled: true,
+      isRefusedDisabled: true,
+      idxImage: 0,
+      totalNumberOfImages: 0,
+      numImages: 0,
+      totalNumberOfPatches: 0,
+      numberOfPatches: 0,
+      reviewPercentage: 0.05,
+      reviewText: "",
       sliderValue: 0,
       textContent: "",
       buttonColor: "",
       hierarchy: null,
       tiff: null,
+      topLeftCoords: [],
+      bottomRightCoords: [],
       geoJSON: {
         type: "FeatureCollection",
         features: [],
       },
+      classCode: "",
       className: null,
-      classColor: '',
+      classColor: "",
       varFill: null,
       images: [],
       selectedImage: "",
@@ -152,40 +172,117 @@ export default {
       patchSize: 512,
       geotiff: null,
       isLoading: false,
-      fields: [],
     };
   },
   async mounted() {
-    // this.setupFileInput();
-    this.setupSlider();
-    this.getImages();
-    this.fetchNomenclature(this.id);
+    this.$refs.canvasGeojson.width = this.patchSize;
+    this.$refs.canvasGeojson.height = this.patchSize;
+    this.$refs.canvasVector.width = this.patchSize;
+    this.$refs.canvasVector.height = this.patchSize;
+    this.loadReview();
+    await this.handleImageChange();
   },
   methods: {
-
-    updateClassColorAndName(className, classColor) {
-      this.className = className;
-      this.classColor = classColor;
+    async loadSegmentationValue() {
+      await axios
+        .get("http://localhost:5000/patch/segmentation_value", {
+          params: {
+            patch_name: `image_${this.selectedImage.id}_patch_${this.i}_${this.j}`,
+          },
+        })
+        .then((response) => {
+          this.sliderValue = response.data.segmentation_value;
+        })
+        .catch((error) => {
+          console.log("Pas de valeur de segmentation pour le patch actuel.");
+        });
     },
-
-    async fetchNomenclature(id) {
-      try {
-        const response = await axios.get(`http://localhost:5000/gestion/nomenclature/${id}`);
-        await this.fetchStylesByNomenclature(response.data.nomenclature);
-      } catch (error) {
-        console.error('Erreur lors de la récupération de la nomenclature:', error);
-      }
+    loadReview() {
+      axios
+        .get("http://localhost:5000/chantier/review", {
+          params: {
+            chantier_id: this.id,
+          },
+        })
+        .then((response) => {
+          this.reviewText = response.data.message;
+        })
+        .catch((error) => {
+          console.error(error);
+        });
     },
-    async fetchStylesByNomenclature(nomenclatureId) {
-      try {
-        const response = await axios.get(`http://localhost:5000/gestion/nomenclature/${nomenclatureId}/styles`);
-        console.log('Styles de la nomenclature:', response.data.styles);
-        this.fields = response.data.styles.map(style => [style.nom, style.couleur]);
-      } catch (error) {
-        console.error('Erreur lors de la récupération des styles de la nomenclature:', error);
-      }
+    accepter() {
+      axios
+        .post("http://localhost:5000/chantier/accepter", {
+          chantier_id: this.id,
+          message: this.$refs.textbox.value,
+        })
+        .then((response) => {
+          console.log(response.data);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
     },
+    refuser() {
+      axios
+        .post("http://localhost:5000/chantier/refuser", {
+          chantier_id: this.id,
+          message: this.$refs.textbox.value,
+        })
+        .then((response) => {
+          console.log(response.data);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    },
+    drawCanvas() {
+      // Construire le nom de la table
+      let tableName = `image_${this.selectedImage.id}_patch_${this.i}_${this.j}`;
 
+      // Faire une requête axios pour récupérer le GeoJSON
+      axios
+        .get(`http://localhost:5000/get_patch_by_name/${tableName}`)
+        .then((response) => {
+          // Récupérer le GeoJSON de la réponse
+          let geojson = response.data[0].data;
+          console.log(geojson);
+
+          let canvas = this.$refs.canvasGeojson;
+          canvas.width = this.patchSize;
+          canvas.height = this.patchSize;
+          let ctx = canvas.getContext("2d");
+
+          // Parcourir chaque feature dans le GeoJSON
+          for (let feature of geojson.features) {
+            // Commencer un nouveau chemin pour la feature
+            ctx.beginPath();
+
+            // Parcourir chaque coordonnée dans la feature
+            for (let i = 0; i < feature.geometry.coordinates[0].length; i++) {
+              let coordinate = feature.geometry.coordinates[0][i];
+
+              // Pour le premier point, déplacer le chemin à ce point
+              if (i === 0) {
+                ctx.moveTo(coordinate[1], coordinate[0]);
+              }
+              // Pour les points suivants, ajouter une ligne au point
+              else {
+                ctx.lineTo(coordinate[1], coordinate[0]);
+              }
+            }
+
+            // Fermer le chemin et le remplir
+            ctx.closePath();
+            ctx.fillStyle = feature.properties.class_color;
+            ctx.fill();
+          }
+        })
+        .catch((error) => {
+          console.log("Pas de GeoJSON pour ce patch.");
+        });
+    },
     async loadGeoTIFF(url) {
       this.isLoading = true;
 
@@ -203,38 +300,15 @@ export default {
 
       this.isLoading = false;
     },
-    moveLeft() {
-      if (this.i > 0) {
-        this.i--;
-        this.setupFileInput();
-      }
-    },
-    moveUp() {
-      if (this.j > 0) {
-        this.j--;
-        this.setupFileInput();
-      }
-    },
-    moveRight() {
-      if (this.i < this.numPatchesX - 1) {
-        this.i++;
-        this.setupFileInput();
-      }
-    },
-    moveDown() {
-      if (this.j < this.numPatchesY - 1) {
-        this.j++;
-        this.setupFileInput();
-      }
-    },
 
     async handleImageChange() {
+      await this.getImages();
       await this.loadGeoTIFF(this.selectedImage.name);
       this.setupFileInput();
     },
 
     async getImages() {
-      axios
+      await axios
         .get("http://localhost:5000/data/chantier/getImages", {
           params: {
             id_chantier: this.id,
@@ -242,93 +316,107 @@ export default {
         })
         .then((response) => {
           this.images = [...response.data.images];
-          // console.log(this.images);
+          this.numImages = this.images.length;
+          this.selectedImage = this.images[this.idxImage];
         })
         .catch((error) => {
           console.error("Erreur lors de la récupération des images :", error);
         });
     },
 
-    async getPatch() {
+    async setTotalNumberOfPatches() {
       const image = await this.geotiff.getImage();
-
       const imageWidth = image.getWidth();
       const imageHeight = image.getHeight();
-      // Vérifiez si les valeurs i,j sont en dehors des limites de l'image
-      if (
-        this.i * this.patchSize > imageWidth ||
-        this.j * this.patchSize > imageHeight
-      ) {
-        console.log("Index out of bounds");
-        return;
-      }
-      const pool = new GeoTIFF.Pool();
 
-      this.numPatchesX = Math.ceil(imageWidth / this.patchSize);
-      this.numPatchesY = Math.ceil(imageHeight / this.patchSize);
+      const numPatchesX = Math.ceil(imageWidth / this.patchSize);
+      const numPatchesY = Math.ceil(imageHeight / this.patchSize);
 
-      const canvas = this.$refs.canvasPrevisu;
-      canvas.width = 300;
-      canvas.height = 300;
-      const ctx = canvas.getContext("2d");
+      this.totalNumberOfPatches =
+        Math.round(numPatchesX * numPatchesY * this.reviewPercentage) - 1;
 
-      const rectWidth = canvas.width / this.numPatchesX;
-      const rectHeight = canvas.height / this.numPatchesY;
+      this.numberOfPatches = Math.round(
+        numPatchesX * numPatchesY * this.reviewPercentage
+      );
+    },
 
-      for (let x = 0; x < this.numPatchesX; x++) {
-        for (let y = 0; y < this.numPatchesY; y++) {
-          ctx.strokeStyle = "black";
-          ctx.strokeRect(x * rectWidth, y * rectHeight, rectWidth, rectHeight);
-          ctx.fillStyle =
-            x === this.i && y === this.j ? "red" : "rgba(0, 0, 0, 0)";
-          ctx.fillRect(x * rectWidth, y * rectHeight, rectWidth, rectHeight);
+    async getPatch() {
+      this.isNextPatchDisabled = false;
+      this.numberOfPatches--;
+      if (this.numberOfPatches > 0) {
+        const image = await this.geotiff.getImage();
+
+        const imageWidth = image.getWidth();
+        const imageHeight = image.getHeight();
+
+        const pool = new GeoTIFF.Pool();
+
+        this.numPatchesX = Math.ceil(imageWidth / this.patchSize);
+        this.numPatchesY = Math.ceil(imageHeight / this.patchSize);
+
+        this.i = Math.floor(Math.random() * this.numPatchesX);
+        this.j = Math.floor(Math.random() * this.numPatchesY);
+
+        const offsetX = this.i * this.patchSize;
+        const offsetY = this.j * this.patchSize;
+
+        // Vérifiez si les valeurs i,j sont en dehors des limites de l'image
+        if (
+          this.i * this.patchSize > imageWidth ||
+          this.j * this.patchSize > imageHeight
+        ) {
+          console.log("Index out of bounds");
+          return;
         }
-      }
-      axios
-        .get("http://localhost:5000/get_patches", {
-          params: {
-            image_id: this.selectedImage.id,
-          },
-        })
-        .then((response) => {
-          response.data.forEach((patch) => {
-            const x = patch.i;
-            const y = patch.j;
 
-            ctx.fillStyle = "green";
-            ctx.fillRect(x * rectWidth, y * rectHeight, rectWidth, rectHeight);
-          });
-        })
-        .catch((error) => {
-          console.log(error);
+        const patch = await image.readRasters({
+          pool: pool,
+          window: [
+            offsetX,
+            offsetY,
+            offsetX + this.patchSize,
+            offsetY + this.patchSize,
+          ],
+          interleave: true,
         });
 
-      const offsetX = this.i * this.patchSize;
-      const offsetY = this.j * this.patchSize;
-
-      const patch = await image.readRasters({
-        pool: pool,
-        window: [
+        const metadata = await getImageMetadata(
+          image,
           offsetX,
           offsetY,
-          offsetX + this.patchSize,
-          offsetY + this.patchSize,
-        ],
-        interleave: true,
-      });
-      const metadata = await getImageMetadata(
-        image,
-        offsetX,
-        offsetY,
-        this.patchSize
-      );
-      const arrayBufferPatch = await GeoTIFF.writeArrayBuffer(patch, metadata);
-      return arrayBufferPatch;
+          this.patchSize
+        );
+
+        const arrayBufferPatch = await GeoTIFF.writeArrayBuffer(
+          patch,
+          metadata
+        );
+        return arrayBufferPatch;
+      } else {
+        if (this.idxImage >= this.images.length - 1) {
+          this.isNextPatchDisabled = true;
+          this.isAcceptedDisabled = false;
+          this.isRefusedDisabled = false;
+          console.log("All images reviewed");
+          return;
+        } else {
+          this.isNextPatchDisabled = true;
+          this.idxImage++;
+          this.selectedImage = this.images[this.idxImage];
+          await this.handleImageChange();
+        }
+        console.log("All patches reviewed");
+        return;
+      }
     },
 
     async setupFileInput() {
+      if (this.numberOfPatches === 0) {
+        await this.setTotalNumberOfPatches();
+      }
       const arrayBuffer = await this.getPatch();
       this.processTiff(arrayBuffer);
+      this.drawCanvas();
     },
 
     async readTiff(buffer) {
@@ -359,9 +447,8 @@ export default {
       };
     },
 
-    async processTiff(buffer) {
-      const test = await this.getPatch();
-      this.tiff = await this.readTiff(test);
+    async processTiff(arrayBuffer) {
+      this.tiff = await this.readTiff(arrayBuffer);
 
       const clusterCount = Math.round(
         (this.tiff.width * this.tiff.height) / 200
@@ -398,7 +485,7 @@ export default {
       let ctxVector = this.$refs.canvasVector.getContext("2d");
       this.$refs.canvasVector.width = this.tiff.width;
       this.$refs.canvasVector.height = this.tiff.height;
-      this.$refs.canvasVector.style.opacity = sliderOpacity.value;
+      this.$refs.canvasVector.style.opacity = this.$refs.sliderOpacity.value;
       ctxVector.clearRect(0, 0, canvas.width, canvas.height);
 
       const neighboringRegions = this.findNeighboringRegions(
@@ -409,6 +496,9 @@ export default {
 
       this.varFill = this.fillRegion(labels, neighboringRegions);
       this.$refs.canvasVector.addEventListener("click", this.varFill);
+      await this.loadSegmentationValue();
+      await this.handleSlider(this.sliderValue);
+      this.setupSlider();
     },
 
     convertToGeographicCoords(x, y) {
@@ -416,41 +506,6 @@ export default {
         "+proj=lcc +lat_1=44 +lat_2=49 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs";
       const destProjection = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
       return proj4(sourceProjection, destProjection, [x, y]);
-    },
-
-    vectorize() {
-      const jsonContent = JSON.stringify(this.geoJSON);
-      const blob = new Blob([jsonContent], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "geojson_data.json";
-      document.body.appendChild(a);
-      a.click();
-      URL.revokeObjectURL(url);
-      axios
-        .post("http://localhost:5000/save_patch", {
-          name: `image_${this.selectedImage.id}_patch_${this.i}_${this.j}`,
-          id_img_sortie: this.selectedImage.id,
-          data: this.geoJSON,
-          i: this.i,
-          j: this.j,
-          segmentation_value: parseFloat(this.sliderValue),
-        })
-        .then((response) => {
-          console.log(response);
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    },
-
-    exportImage() {
-      const image = this.$refs.canvasVector.toDataURL("image/png");
-      const downloadLink = document.createElement("a");
-      downloadLink.href = image;
-      downloadLink.download = "canvas_image.png";
-      downloadLink.click();
     },
 
     updateOpacity(event) {
@@ -514,7 +569,7 @@ export default {
     },
 
     setupSlider() {
-      const slider = document.getElementById("slider");
+      const slider = this.$refs.slider;
 
       let working = false;
       slider.addEventListener("input", async () => {
@@ -554,7 +609,6 @@ export default {
 
       return neighborsMap;
     },
-
 
     traversePixelsInOrder(neighborsMap, width) {
       const visited = new Set();
@@ -643,6 +697,13 @@ export default {
 
       const holesInReg = new Map();
 
+      const topLeftLat = this.topLeftCoords[1];
+      const topLeftLng = this.topLeftCoords[0];
+      const botRightLat = this.bottomRightCoords[1];
+      const botRightLng = this.bottomRightCoords[0];
+      const latPerPixel = (topLeftLat - botRightLat) / height;
+      const lngPerPixel = (botRightLng - topLeftLng) / width;
+
       const queue = [];
       queue.push({ x: i, y: j });
 
@@ -706,7 +767,6 @@ export default {
         orderedPixels,
         this.$refs.canvasVector.width
       );
-      
       /*const filteredConvPixels = this.convertToCoordinates(
         convOrdPixels,
         this.$refs.canvasVector.width,
@@ -722,8 +782,9 @@ export default {
         type: "Feature",
         geometry: outerPolygon,
         properties: {
+          class_code: this.classCode,
           class_name: this.className,
-          class_color: this.classColor
+          class_color: this.classColor,
         },
       });
 
@@ -742,11 +803,11 @@ export default {
           orderedPixels,
           this.$refs.canvasVector.width
         );
-        // const filteredConvPixels = this.convertToCoordinates(
-        //   convOrdPixels,
-        //   this.$refs.canvasVector.width,
-        //   this.$refs.canvasVector.height
-        // );
+        const filteredConvPixels = this.convertToCoordinates(
+          convOrdPixels,
+          this.$refs.canvasVector.width,
+          this.$refs.canvasVector.height
+        );
 
         holesPolygons.push(convOrdPixels);
       });
@@ -757,8 +818,9 @@ export default {
         type: "Feature",
         geometry: outerPolygon,
         properties: {
+          class_code: this.classCode,
           class_name: this.className,
-          class_color: this.classColor
+          class_color: this.classColor,
         },
       });
     },
@@ -861,25 +923,36 @@ export default {
 };
 </script>
 
-<style>
-#loading-div {
+<style scoped>
+#progressImage {
   position: absolute;
-  top: 5vh;
-  left: 90vw;
-  font-size: 16px;
-  color: #333;
+  left: 25%;
+  right: 50%;
+  top: 15%;
+  width: 50%;
 }
-
-#previsualisation {
-  position: fixed;
-  top: 70vh;
-  left: 70vw;
-
-  max-width: 30vw;
-  max-height: 30vh;
+#progressPatch {
+  position: absolute;
+  left: 25%;
+  right: 50%;
+  top: 10%;
+  width: 50%;
 }
-
-/* div.button-container {
+.textbox-container {
+  position: absolute;
+  bottom: 3%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+}
+.textbox {
+  width: 50%;
+  height: 100px;
+  padding: 10px;
+  resize: none;
+}
+.review-button-container {
   position: absolute;
   bottom: 0;
   left: 50%;
@@ -887,8 +960,34 @@ export default {
   display: flex;
   justify-content: center;
   gap: 10px;
-} */
-
+}
+#canvasGeojson {
+  position: absolute;
+  border: 1px solid black;
+  position: absolute;
+  top: 20%;
+}
+#loading-div {
+  position: absolute;
+  top: 50px;
+  right: 10px;
+  font-size: 16px;
+  color: #333;
+}
+#previsualisation {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+}
+#nextPatchButton {
+  position: absolute;
+  bottom: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
 #images-menu-container,
 #labellisation-container {
   position: absolute;
@@ -899,14 +998,13 @@ export default {
   height: 95vh;
 }
 
-
 #labellisation-container {
   top: 10vh;
 }
 
-
 .app {
-  height: 100%;
+  width: 100%;
+  height: 80vh;
   display: flex;
   flex-direction: column;
 }
@@ -921,11 +1019,10 @@ export default {
   display: flex;
   flex-direction: row;
 }
-
 input#slider.slider {
   width: 300px;
+  display: none;
 }
-
 input[name="range"] {
   position: relative;
   top: 100px;
@@ -943,30 +1040,26 @@ input[name="range"] {
   background-color: white;
   display: flex;
   flex-direction: row;
-  transform: rotate(270deg);
 }
 
 .slider-values {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  margin-left: 4px;
-}
-
-.slider-value {
-  font-size: 12px;
-  text-align: center;
+  height: 50px;
+  width: 50px;
+  font-size: 16px;
+  color: #000;
+  transform: rotate(90deg);
 }
 
 .canvas-container {
+  position: absolute;
+  left: 20%;
+  top: 10%;
   /* width: auto;
     height: auto; */
   aspect-ratio: auto;
   display: flex;
   justify-content: center;
   background-color: black;
-
-  position: relative;
 }
 
 .canvas {
@@ -976,7 +1069,7 @@ input[name="range"] {
 
   position: absolute;
   top: 0;
-  left: 0;
+  left: 20;
 }
 
 #sliderOpacity {
@@ -990,6 +1083,7 @@ input[name="range"] {
   -webkit-transition: 0.2s;
   transition: opacity 0.2s;
   border-radius: 5px;
+  display: none;
 }
 
 #sliderOpacity:hover {
@@ -1012,5 +1106,22 @@ input[name="range"] {
   background: #4caf50;
   cursor: pointer;
   border-radius: 50%;
+}
+
+#class-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+}
+
+#class-buttons button {
+  padding: 5px 10px;
+  font-size: 10px;
+  border: solid 1px black;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 </style>
