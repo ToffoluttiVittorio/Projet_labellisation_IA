@@ -6,20 +6,11 @@
 </template>
 
 <style scoped>
-.container {
-  display: flex;
-  overflow: None;
-}
-
-.stacReader {
-  width: 25%;
-  height: 95vh;
-  overflow: auto;
-  border-right: 1px solid #ccc;
-}
-
 #map {
-  width: 75%;
+  position: absolute;
+  top: 5vh;
+  left: 25vw;
+  width: 75vw;
   height: 95vh;
 }
 </style>

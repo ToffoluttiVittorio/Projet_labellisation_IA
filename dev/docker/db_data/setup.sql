@@ -1,13 +1,16 @@
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE user
-INSERT INTO public.user (id,username,password) VALUES
-(1,'lem','password'),
-(2,'leh','1234');
+INSERT INTO public.user (username,password) VALUES
+('lem','m'),
+('leh','1234'),
+('lev','v'),
+('lef','f');
+
 
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE Chantier
-INSERT INTO public.Chantier (id_style, code, nbr_image, stac_url, user_key, name) VALUES
-(1, 1234, 5, 'https://exemple.com/chantier1',1,'région de Yzernay'),
-(2, 1234, 5, 'https://exemple.com/chantier1',1,'région Cherbourg'),
-(2, 5678, 3, 'https://exemple.com/chantier2',2,'Région parisienne');
+INSERT INTO public.Chantier (name, nomenclature, nbr_image, stac_url, createur, annotateur, reviewer, message) VALUES
+('Yzernay', 1, 2, 'https://exemple.com/chantier1', 1, 2, 3, 'ras'),
+('Cherbourg', 2, 1, 'https://exemple.com/chantier1', 1, 3, 4, 'tout à refaire'),
+('Paris', 1, 1, 'https://exemple.com/chantier2', 2, 1, 3, 'bon à jeter');
 
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE Image_sortie
 INSERT INTO public.image_sortie (name, id_chantier,current_patch) VALUES
