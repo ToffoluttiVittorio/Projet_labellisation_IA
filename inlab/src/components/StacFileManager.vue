@@ -1,16 +1,19 @@
 <template>
   <div class="stac-container">
     <h2>STAC File Manager</h2>
-    <form @submit.prevent="loadFiles">
+    <form @submit.prevent="loadStac">
       <input type="text" v-model="url" placeholder="Enter URL" />
       <button type="submit">Enter</button>
     </form>
-    <div class="scrollable">
+    <div id="files" class="scrollable">
       <ul>
-        <li v-for="file in files" :key="file.url">
-          {{ file.href }}
-          <input type="checkbox" v-model="file.checked" @change="updateMap(file)" />
-        </li>
+        <template v-for="folder in folders" :key="folder.name">
+          <folder-component
+            :folder="folder"
+            @toggle="toggleFolder"
+            @updateMap="updateMap"
+          />
+        </template>
       </ul>
     </div>
     <button @click="saveProject">Enregistrer le chantier</button>
@@ -20,39 +23,62 @@
     <form @submit.prevent="saveChantier">
       <div class="form-group">
         <label for="nomChantier">Nom du chantier : </label>
-        <input type="text" id="nomChantier" v-model="nomChantier">
+        <input type="text" id="nomChantier" v-model="nomChantier" />
       </div>
       <div class="form-group">
         <label for="labelliser">À annoter par : </label>
         <select id="labelliser" v-model="labelliser">
           <option value="">Sélectionner un utilisateur</option>
-          <option v-for="user in users" :key="user.id" :value="user.username">{{ user.username }}</option>
+          <option v-for="user in users" :key="user.id" :value="user.username">
+            {{ user.username }}
+          </option>
         </select>
       </div>
       <div class="form-group">
         <label for="review">À review par : </label>
         <select id="review" v-model="review">
           <option value="">Sélectionner un utilisateur</option>
-          <option v-for="user in users" :key="user.id" :value="user.username">{{ user.username }}</option>
+          <option v-for="user in users" :key="user.id" :value="user.username">
+            {{ user.username }}
+          </option>
         </select>
       </div>
       <div id="nomenclature-container" class="form-group">
         <label for="nomenclature">Nomenclature:</label>
-        <input type="text" id="nomenclature" v-model="nomenclature">
+        <input type="text" id="nomenclature" v-model="nomenclature" />
 
         <div id="nomenclature">
           <div id="nomenclature-select">
-            <label for="nomenclature">Sélectionnez une nomenclature existante :</label>
+            <label for="nomenclature"
+              >Sélectionnez une nomenclature existante :</label
+            >
             <select id="nomenclature" @change="getStyles">
-              <option value="" disabled selected>Choisissez une nomenclature</option>
-              <option v-for="nomenclature in nomenclatures" :value="nomenclature.id">{{ nomenclature.nom }}</option>
+              <option value="" disabled selected>
+                Choisissez une nomenclature
+              </option>
+              <option
+                v-for="nomenclature in nomenclatures"
+                :value="nomenclature.id"
+              >
+                {{ nomenclature.nom }}
+              </option>
             </select>
           </div>
           <form @submit.prevent="handleCreaNomSubmit">
             <label for="textContent">Créer un champs :</label>
-            <input type="text" id="textContent" name="textContent" v-model="textContent">
+            <input
+              type="text"
+              id="textContent"
+              name="textContent"
+              v-model="textContent"
+            />
             <label for="buttonColor">Couleur:</label>
-            <input type="color" id="buttonColor" name="buttonColor" v-model="buttonColor">
+            <input
+              type="color"
+              id="buttonColor"
+              name="buttonColor"
+              v-model="buttonColor"
+            />
             <button type="submit">Créer Bouton</button>
           </form>
           <div id="table-container">
@@ -86,14 +112,15 @@ import * as STAC from "./stac.js";
 import STACLayer from "ol-stac";
 import axios from "axios";
 import { pan } from "ol/interaction/Interaction";
+import FolderComponent from "./FolderComponent.vue";
 
 export default {
   inject: ["map"],
   data() {
     return {
       clicked: false,
-      files: [],
-      url: "https://canada-spot-ortho.s3.amazonaws.com/canada_spot_orthoimages/canada_spot4_orthoimages/S4_2006/catalog.json",
+      folders: [],
+      url: "https://canada-spot-ortho.s3.amazonaws.com/catalog.json",
       layers: {},
       users: [],
       labelliser: "",
@@ -101,8 +128,8 @@ export default {
       nomChantier: "",
       nomenclature: "",
       fields: [],
-      textContent: '',
-      buttonColor: '',
+      textContent: "",
+      buttonColor: "",
       nomenclatures: [],
       selectedNomenclatureId: null,
     };
@@ -112,100 +139,177 @@ export default {
     this.getNomenclaturesAndStyles();
   },
   methods: {
-
+    toggleFolder(folder) {
+      folder.open = !folder.open;
+    },
     removeField(index) {
       this.fields.splice(index, 1);
     },
-
     getNomenclaturesAndStyles() {
-      axios.get('http://localhost:5000/gestion/nomenclatures')
-        .then(response => {
+      axios
+        .get("http://localhost:5000/gestion/nomenclatures")
+        .then((response) => {
           this.nomenclatures = response.data;
         })
-        .catch(error => {
-          console.error('Erreur lors de la récupération des nomenclatures et des styles :', error);
+        .catch((error) => {
+          console.error(
+            "Erreur lors de la récupération des nomenclatures et des styles :",
+            error
+          );
         });
     },
     getStyles(event) {
       const selectedNomenclatureId = event.target.value;
-      const selectedNomenclature = this.nomenclatures.find(nomenclature => nomenclature.id === parseInt(selectedNomenclatureId));
+      const selectedNomenclature = this.nomenclatures.find(
+        (nomenclature) => nomenclature.id === parseInt(selectedNomenclatureId)
+      );
       if (selectedNomenclature) {
-        this.fields = selectedNomenclature.styles.map(style => [style.nom, style.couleur]);
+        this.fields = selectedNomenclature.styles.map((style) => [
+          style.nom,
+          style.couleur,
+        ]);
       } else {
         this.fields = [];
       }
     },
 
     handleCreaNomSubmit() {
-      if (this.textContent == '' || this.buttonColor == '') {
-        return
+      if (this.textContent == "" || this.buttonColor == "") {
+        return;
       }
       this.fields.push([this.textContent, this.buttonColor]);
-      this.textContent = '';
-      this.buttonColor = '';
+      this.textContent = "";
+      this.buttonColor = "";
     },
 
     fetchUsers() {
-      axios.get('http://localhost:5000/data/user/getUser')
-        .then(response => {
+      axios
+        .get("http://localhost:5000/data/user/getUser")
+        .then((response) => {
           this.users = response.data.users;
         })
-        .catch(error => {
-          console.error('Erreur lors de la récupération des utilisateurs :', error);
+        .catch((error) => {
+          console.error(
+            "Erreur lors de la récupération des utilisateurs :",
+            error
+          );
         });
     },
     saveProject() {
-      const saveContainer = document.querySelector('.save-container');
+      const saveContainer = document.querySelector(".save-container");
       if (saveContainer) {
         saveContainer.style.zIndex = 100;
         saveContainer.style.opacity = 1;
       }
     },
-    loadFiles() {
-      let index = new STAC.Index();
-      index.initialize(this.url);
-      const rootNode = index.getRootNode();
-      console.log(rootNode.entry.links);
-      this.files = rootNode.entry.links;
-    },
-    updateMap(file) {
-      if (file.checked) {
-        // Add a stacLayer to the map for this file
-        // console.log(file.href);
-        let stac = new STACLayer({
-          url: file.href,
+    loadFiles(elem, folder) {
+      try {
+        folder.files.push({
+          href: elem.href,
+          checked: false,
         });
-
-        let panAssetHref = "";
-
-        fetch(file.href)
-          .then((response) => response.json())
-          .then((data) => {
-            let assets = data.assets;
-            panAssetHref = assets.pan
-              ? assets.pan.href
-              : Object.values(assets)[0].href;
-            this.layers[panAssetHref] = stac;
-          })
-          .catch((error) => console.error("Error:", error));
-
+        // this.createStacLayer(elem);
+      } catch (error) {
+        console.error("Error loading files:", error);
+      }
+    },
+    loadFolder(elem, parentFolder) {
+      try {
+        let index = new STAC.Index();
+        index.initialize(elem.href);
+        let rootNode = index.getRootNode();
+        let folder = {
+          name: elem.href,
+          files: [],
+          checked: false,
+          open: false,
+          subfolders: [],
+        };
+        parentFolder.subfolders.push(folder);
+        let children = rootNode.entry.links.filter(
+          (link) => link.rel === "item" || link.rel === "child"
+        );
+        for (let child of children) {
+          if (child.rel === "item") {
+            this.loadFiles(child, folder);
+          } else if (child.rel === "child") {
+            this.loadFolder(child, folder);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading folder:", error);
+      }
+    },
+    loadStac() {
+      this.folders = [];
+      try {
+        let index = new STAC.Index();
+        index.initialize(this.url);
+        let rootNode = index.getRootNode();
+        let children = rootNode.entry.links.filter(
+          (link) => link.rel === "item" || link.rel === "child"
+        );
+        let folder = {
+          name: this.url,
+          files: [],
+          checked: false,
+          open: false,
+          subfolders: [],
+        };
+        this.folders.push(folder);
+        for (const child of children) {
+          if (child.rel === "item") {
+            this.loadFiles(child, folder);
+          } else if (child.rel === "child") {
+            this.loadFolder(child, folder);
+          }
+        }
+        console.log("fin");
+        console.log(this.folders);
+      } catch (error) {
+        console.error("Error loading STAC:", error);
+      }
+    },
+    async updateMap(file) {
+      let panAssetHref = await this.getPanAssetHref(file.href);
+      if (file.checked) {
+        let stac = new STACLayer({ url: file.href });
+        this.layers[panAssetHref] = stac;
         this.map.map.addLayer(stac);
-
         stac.on("sourceready", () => {
           this.map.map.getView().fit(stac.getExtent());
         });
       } else {
-        let stac = this.layers[panAssetHref]; // Retrieve the layer
+        let stac = this.layers[panAssetHref];
         if (stac) {
           this.map.map.removeLayer(stac);
-          delete this.layers[panAssetHref]; // Remove the layer from the layers object
+          delete this.layers[panAssetHref];
         }
       }
     },
+    async createStacLayer(file) {
+      let stac = new STACLayer({ url: file.href });
+      this.map.map.addLayer(stac);
+      stac.on("sourceready", () => {
+        this.map.map.getView().fit(stac.getExtent());
+      });
+    },
+    async getPanAssetHref(url) {
+      try {
+        const response = await axios.get(url);
+        const assets = response.data.assets;
+        return assets.pan ? assets.pan.href : Object.values(assets)[0].href;
+      } catch (error) {
+        console.error("Error fetching asset:", error);
+        throw error;
+      }
+    },
     saveChantier() {
-      const user_id = sessionStorage.getItem('user_id');
-      const annotateur = this.users.find(user => user.username === this.labelliser);
-      const reviewer = this.users.find(user => user.username === this.review);
+      const user_id = sessionStorage.getItem("user_id");
+      const annotateur = this.users.find(
+        (user) => user.username === this.labelliser
+      );
+      const reviewer = this.users.find((user) => user.username === this.review);
 
       if (this.clicked || !annotateur || !reviewer) {
         return; // Si oui, ne rien faire ou si les utilisateurs ne sont pas sélectionnés
@@ -218,12 +322,13 @@ export default {
         layers: Object.keys(this.layers),
       };
 
-      axios.post('http://localhost:5000/gestion/nomenclature', {
-        nom: this.nomenclature,
-        champs: this.fields
-      })
-        .then(response => {
-          console.log('Nomenclature créée');
+      axios
+        .post("http://localhost:5000/gestion/nomenclature", {
+          nom: this.nomenclature,
+          champs: this.fields,
+        })
+        .then((response) => {
+          console.log("Nomenclature créée");
           const nomenclatureId = response.data.id;
 
           axios
@@ -235,7 +340,7 @@ export default {
               createur: user_id,
               annotateur: annotateur.id,
               reviewer: reviewer.id,
-              message: ''
+              message: "",
             })
             .then((response) => {
               // Enregistrez chaque couche comme une image_sortie
@@ -255,15 +360,17 @@ export default {
                 });
               });
             });
-
-
-
         })
-        .catch(error => {
-          console.error('Erreur lors de la création de la nomenclature :', error);
+        .catch((error) => {
+          console.error(
+            "Erreur lors de la création de la nomenclature :",
+            error
+          );
         });
-
     },
+  },
+  components: {
+    FolderComponent,
   },
 };
 </script>
@@ -293,9 +400,6 @@ export default {
   justify-content: center;
 }
 
-.save-container form div,
-.save-container form button {}
-
 .stac-container {
   position: absolute;
   left: 0;
@@ -319,23 +423,17 @@ li {
 }
 
 #nomenclature-container {
-
   display: flex;
   flex-direction: column;
-
 }
 
 #nomenclature {
-
   display: flex;
   align-items: center;
-
 }
 
 #nomenclature form {
-
   display: flex;
   align-items: center;
-
 }
 </style>
