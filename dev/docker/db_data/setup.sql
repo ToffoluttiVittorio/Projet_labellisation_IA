@@ -8,8 +8,8 @@ INSERT INTO public.user (username,password) VALUES
 
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE Chantier
 INSERT INTO public.Chantier (name, nomenclature, nbr_image, stac_url, createur, annotateur, reviewer, message) VALUES
-('Yzernay', 0, 2, 'https://exemple.com/chantier1', 1, 2, 3, 'ras'),
-('Cherbourg', 1, 1, 'https://exemple.com/chantier1', 1, 3, 4, 'tout à refaire'),
+('Yzernay', 1, 2, 'https://exemple.com/chantier1', 1, 2, 3, 'ras'),
+('Cherbourg', 2, 1, 'https://exemple.com/chantier1', 1, 3, 4, 'tout à refaire'),
 ('Paris', 1, 1, 'https://exemple.com/chantier2', 2, 1, 3, 'bon à jeter');
 
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE Image_sortie

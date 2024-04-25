@@ -9,66 +9,43 @@
   </div>
   <div id="loading-div" v-if="isLoading">Loading GeoTIFF...</div>
 
+
   <div id="labellisation-container">
     <div class="app" id="app">
       <div class="app-header">
-        <input type="file" id="file-selector" />
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value="0.2"
-          id="sliderOpacity"
-          @input="updateOpacity"
-        />
-
-        <div class="nomenclature-container" id="nomenclature">
-          <input
-            type="file"
-            id="csv-input"
-            accept=".csv"
-            @change="updateNomCsv"
-          />
-          <div id="class-buttons" ref="classButtonsContainer"></div>
-        </div>
-
+        <input type="range" min="0" max="1" step="0.01" value="0.2" id="sliderOpacity" @input="updateOpacity" />
         <button @click="exportImage">exporter</button>
         <button @click="vectorize">vectorize</button>
       </div>
 
-      <div id="buttonCreation">
-        <form @submit.prevent="handleSubmit">
-          <label for="textContent">Texte:</label>
-          <input
-            type="text"
-            id="textContent"
-            name="textContent"
-            v-model="textContent"
-          />
-          <label for="buttonColor">Couleur:</label>
-          <input
-            type="color"
-            id="buttonColor"
-            name="buttonColor"
-            v-model="buttonColor"
-          />
-          <button type="submit">Créer Bouton</button>
-        </form>
+      <div id="table-container">
+        <table id="table-nom">
+          <thead>
+            <tr>
+              <th>Index</th>
+              <th>Nom du champ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(field, index) in fields" :key="index">
+              <td>{{ index + 1 }}</td>
+              <td @click="updateClassColorAndName(field[0], field[1])" :style="{ backgroundColor: field[1] }">{{
+                field[0] }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="button-container">
+        <button @click="moveLeft" :disabled="i === 0">←</button>
+        <button @click="moveUp" :disabled="j === 0">↑</button>
+        <button @click="moveRight" :disabled="i === numPatchesX - 1">→</button>
+        <button @click="moveDown" :disabled="j === numPatchesY - 1">↓</button>
       </div>
 
       <div class="app-body">
         <div class="slide-container">
-          <input
-            type="range"
-            min="0"
-            max="1"
-            value="0"
-            step="any"
-            class="slider"
-            id="slider"
-            list="markers"
-          />
+          <input type="range" min="0" max="1" value="0" step="any" class="slider" id="slider" list="markers" />
           <div class="slider-values">
             <div class="slider-value"></div>
             <div class="slider-value"></div>
@@ -88,16 +65,10 @@
           <canvas class="canvas" id="canvasVector" ref="canvasVector"></canvas>
         </div>
       </div>
-      <p>Id récupéré depuis l'URL : {{ id }}</p>
     </div>
 
   </div>
-  <div class="button-container">
-    <button @click="moveLeft" :disabled="i === 0">←</button>
-    <button @click="moveUp" :disabled="j === 0">↑</button>
-    <button @click="moveRight" :disabled="i === numPatchesX - 1">→</button>
-    <button @click="moveDown" :disabled="j === numPatchesY - 1">↓</button>
-  </div>
+
 
   <canvas id="previsualisation" ref="canvasPrevisu"></canvas>
 
@@ -160,19 +131,14 @@ export default {
   },
   data() {
     return {
-      textContent: "",
-      buttonColor: "",
       hierarchy: null,
       tiff: null,
-      topLeftCoords: [],
-      bottomRightCoords: [],
       geoJSON: {
         type: "FeatureCollection",
         features: [],
       },
-      classCode: "",
       className: null,
-      classColor: "",
+      classColor: '',
       varFill: null,
       images: [],
       selectedImage: "",
@@ -183,14 +149,40 @@ export default {
       patchSize: 512,
       geotiff: null,
       isLoading: false,
+      fields: [],
     };
   },
   async mounted() {
     // this.setupFileInput();
     this.setupSlider();
     this.getImages();
+    this.fetchNomenclature(this.id);
   },
   methods: {
+
+    updateClassColorAndName(className, classColor) {
+      this.className = className;
+      this.classColor = classColor;
+    },
+
+    async fetchNomenclature(id) {
+      try {
+        const response = await axios.get(`http://localhost:5000/gestion/nomenclature/${id}`);
+        await this.fetchStylesByNomenclature(response.data.nomenclature);
+      } catch (error) {
+        console.error('Erreur lors de la récupération de la nomenclature:', error);
+      }
+    },
+    async fetchStylesByNomenclature(nomenclatureId) {
+      try {
+        const response = await axios.get(`http://localhost:5000/gestion/nomenclature/${nomenclatureId}/styles`);
+        console.log('Styles de la nomenclature:', response.data.styles);
+        this.fields = response.data.styles.map(style => [style.nom, style.couleur]);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des styles de la nomenclature:', error);
+      }
+    },
+
     async loadGeoTIFF(url) {
       this.isLoading = true;
 
@@ -461,62 +453,6 @@ export default {
       this.$refs.canvasVector.style.opacity = event.target.value;
     },
 
-    updateNomCsv() {
-      const files = event.target.files;
-      const file = files[0];
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        const csv = reader.result;
-        this.processData(csv);
-      };
-
-      reader.readAsText(file);
-    },
-
-    processData(csv) {
-      const lines = csv.split("\n");
-      lines.forEach((line, index) => {
-        if (index === 0 || line === "") return;
-
-        const columns = line.split(";");
-
-        const code = columns[0];
-        const name = columns[1].replace(/_/g, " ").toUpperCase();
-        const color = columns[2].slice(1, -1);
-        const colorValues = color.split(",");
-
-        const button = document.createElement("button");
-        button.classList.add("btnLabel");
-        button.id = code;
-        button.textContent = name;
-        button.style.backgroundColor = `rgb(${colorValues[0]}, ${colorValues[1]}, ${colorValues[2]})`;
-        this.$refs.classButtonsContainer.appendChild(button);
-
-        button.addEventListener("click", () => {
-          this.classCode = button.id;
-          this.className = button.textContent;
-          this.classColor = button.style.backgroundColor;
-        });
-      });
-    },
-    handleSubmit() {
-      const newButton = document.createElement("button");
-      newButton.textContent = this.textContent;
-      newButton.style.backgroundColor = this.buttonColor;
-      newButton.classList.add("btnLabel");
-
-      this.$refs.classButtonsContainer.appendChild(newButton);
-
-      this.textContent = "";
-      this.buttonColor = "";
-
-      newButton.addEventListener("click", () => {
-        this.className = newButton.textContent;
-        this.classColor = newButton.style.backgroundColor;
-      });
-    },
-
     findNeighboringRegions(labels, width, height) {
       const neighboringRegions = new Map();
       function isValidCoordinate(x, y) {
@@ -703,13 +639,6 @@ export default {
 
       const holesInReg = new Map();
 
-      const topLeftLat = this.topLeftCoords[1];
-      const topLeftLng = this.topLeftCoords[0];
-      const botRightLat = this.bottomRightCoords[1];
-      const botRightLng = this.bottomRightCoords[0];
-      const latPerPixel = (topLeftLat - botRightLat) / height;
-      const lngPerPixel = (botRightLng - topLeftLng) / width;
-
       const queue = [];
       queue.push({ x: i, y: j });
 
@@ -773,24 +702,23 @@ export default {
         orderedPixels,
         this.$refs.canvasVector.width
       );
-      const filteredConvPixels = this.convertToCoordinates(
-        convOrdPixels,
-        this.$refs.canvasVector.width,
-        this.$refs.canvasVector.height
-      );
+      // const filteredConvPixels = this.convertToCoordinates(
+      //   convOrdPixels,
+      //   this.$refs.canvasVector.width,
+      //   this.$refs.canvasVector.height
+      // );
 
       const outerPolygon = {
         type: "Polygon",
-        coordinates: [filteredConvPixels],
+        coordinates: [orderedPixels],
       };
 
       this.geoJSON.features.push({
         type: "Feature",
         geometry: outerPolygon,
         properties: {
-          class_code: this.classCode,
           class_name: this.className,
-          class_color: this.classColor,
+          class_color: this.classColor
         },
       });
 
@@ -809,13 +737,13 @@ export default {
           orderedPixels,
           this.$refs.canvasVector.width
         );
-        const filteredConvPixels = this.convertToCoordinates(
-          convOrdPixels,
-          this.$refs.canvasVector.width,
-          this.$refs.canvasVector.height
-        );
+        // const filteredConvPixels = this.convertToCoordinates(
+        //   convOrdPixels,
+        //   this.$refs.canvasVector.width,
+        //   this.$refs.canvasVector.height
+        // );
 
-        holesPolygons.push(filteredConvPixels);
+        holesPolygons.push(convOrdPixels);
       });
 
       outerPolygon.coordinates.push(...holesPolygons);
@@ -824,9 +752,8 @@ export default {
         type: "Feature",
         geometry: outerPolygon,
         properties: {
-          class_code: this.classCode,
           class_name: this.className,
-          class_color: this.classColor,
+          class_color: this.classColor
         },
       });
     },
@@ -930,20 +857,24 @@ export default {
 </script>
 
 <style>
-
 #loading-div {
   position: absolute;
-  top: 40px;
-  right: 10px;
+  top: 5vh;
+  left: 90vw;
   font-size: 16px;
   color: #333;
 }
+
 #previsualisation {
   position: fixed;
-  bottom: 0;
-  right: 0;
+  top: 70vh;
+  left: 70vw;
+
+  max-width: 30vw;
+  max-height: 30vh;
 }
-div.button-container {
+
+/* div.button-container {
   position: absolute;
   bottom: 0;
   left: 50%;
@@ -951,7 +882,8 @@ div.button-container {
   display: flex;
   justify-content: center;
   gap: 10px;
-}
+} */
+
 #images-menu-container,
 #labellisation-container {
   position: absolute;
@@ -962,15 +894,6 @@ div.button-container {
   height: 95vh;
 }
 
-/* div.button-container {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-} */
 
 #labellisation-container {
   top: 10vh;
@@ -1088,22 +1011,5 @@ input[name="range"] {
   background: #4caf50;
   cursor: pointer;
   border-radius: 50%;
-}
-
-#class-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  padding: 20px;
-}
-
-#class-buttons button {
-  padding: 5px 10px;
-  font-size: 10px;
-  border: solid 1px black;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
 }
 </style>

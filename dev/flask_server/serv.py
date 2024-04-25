@@ -251,6 +251,14 @@ def get_patches():
     patches = Patch.query.filter_by(id_img_sortie=image_id).all()
 
     return jsonify([patch.to_dict() for patch in patches])
+    
+@app.route('/gestion/nomenclature/<int:id_chantier>', methods=['GET'])
+def get_nomenclature_by_chantier_id(id_chantier):
+    chantier = Chantier.query.filter_by(id=id_chantier).first()
+    if chantier:
+        return jsonify({'nomenclature': chantier.nomenclature})
+    else:
+        return jsonify({'error': 'Chantier non trouvé'}), 404
 
 
 ################################## BDD GESTION ##################################
@@ -309,6 +317,15 @@ def get_nomenclatures_and_styles():
         nomenclature_json = {'id': nomenclature.id, 'nom': nomenclature.nom, 'styles': styles_json}
         nomenclatures_with_styles.append(nomenclature_json)
     return jsonify(nomenclatures_with_styles)
+    
+@app.route('/gestion/nomenclature/<int:id>/styles', methods=['GET'])
+def get_styles_by_nomenclature(id):
+    styles = Style.query.filter_by(nomenclature=id).all()
+    if styles:
+        serialized_styles = [{'id': style.id, 'nom': style.nom, 'couleur': style.couleur} for style in styles]
+        return jsonify({'styles': serialized_styles}), 200
+    else:
+        return jsonify({'message': 'Aucun style trouvé pour cette nomenclature'}), 404
 
 
 if __name__ == '__main__':
