@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, DOUBLE_PRECISION
 from sqlalchemy import ARRAY
 
 app = Flask(__name__)
@@ -32,6 +32,8 @@ class Chantier(db.Model):
     nbr_image = db.Column(db.Integer, nullable=False)
     stac_url = db.Column(db.String(255), nullable=False)
     user_key = db.Column(db.String(255), db.ForeignKey('user.id'), nullable=False)
+    message = db.Column(db.String)
+    reviewed = db.Column(db.Boolean, default=False)
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
@@ -58,15 +60,9 @@ class Patch(db.Model):
     data = db.Column(JSONB)
     i = db.Column(db.Integer)
     j = db.Column(db.Integer)
+    segmentation_value = db.Column(DOUBLE_PRECISION)
     def to_dict(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'id_img_sortie': self.id_img_sortie,
-            'data': self.data,
-            'i': self.i,
-            'j': self.j
-        }
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 class Catalogue(db.Model):
     __tablename__ = 'catalogue'
@@ -188,6 +184,7 @@ def save_patch():
     geoJSON = data.get('data')
     i = data.get('i')
     j = data.get('j')
+    segmentation_value = data.get('segmentation_value')
 
     if not name or not id_img_sortie or not geoJSON or i is None or j is None:
         return "Error: All fields must be filled", 400
@@ -197,14 +194,15 @@ def save_patch():
     if patch:
         # Patch exists, update data
         patch.data = geoJSON
+        patch.segmentation_value = segmentation_value
     else:
         # Patch does not exist, create new
-        patch = Patch(name=name, id_img_sortie=id_img_sortie, data=geoJSON, i=i, j=j)
+        patch = Patch(name=name, id_img_sortie=id_img_sortie, data=geoJSON, i=i, j=j, segmentation_value=segmentation_value)
         db.session.add(patch)
 
     db.session.commit()
 
-    return "Patch enregistré avec succès"
+    return "Success", 200
 
 @app.route('/get_patches', methods=['GET'])
 def get_patches():
@@ -213,6 +211,54 @@ def get_patches():
     patches = Patch.query.filter_by(id_img_sortie=image_id).all()
 
     return jsonify([patch.to_dict() for patch in patches])
+
+@app.route('/get_patch_by_name/<name>', methods=['GET'])
+def get_patch_by_name(name):
+    patches = Patch.query.filter_by(name=name).all()
+
+    if patches:
+        # Convertir les objets Patch en dictionnaires pour pouvoir les renvoyer en JSON
+        patches_dict = [patch.to_dict() for patch in patches]
+        return jsonify(patches_dict), 200
+    else:
+        return "Error: No patch found with this name", 404
+
+@app.route('/chantier/accepter', methods=['POST'])
+def accepter_chantier():
+    data = request.get_json()
+    chantier_id = data.get('chantier_id')
+    message = data.get('message')
+    chantier = Chantier.query.get(chantier_id)
+    chantier.message = message
+    chantier.reviewed = True
+    db.session.commit()
+    return {"status": "success"}
+
+@app.route('/chantier/refuser', methods=['POST'])
+def refuser_chantier():
+    data = request.get_json()
+    chantier_id = data.get('chantier_id')
+    message = data.get('message')
+    chantier = Chantier.query.get(chantier_id)
+    chantier.message = message
+    chantier.reviewed = False
+    db.session.commit()
+    return {"status": "success"}
+
+@app.route('/chantier/review', methods=['GET'])
+def get_chantier_review():
+    chantier_id = request.args.get('chantier_id')
+    chantier = Chantier.query.get(chantier_id)
+    return {"message": chantier.message}
+
+@app.route('/patch/segmentation_value', methods=['GET'])
+def get_patch_segmentation_value():
+    patch_name = request.args.get('patch_name')
+    patch = Patch.query.filter_by(name=patch_name).first()
+    if patch:
+        return {"segmentation_value": patch.segmentation_value}
+    else:
+        return {"error": "No patch found with this name"}, 404
 
 ################################## BDD GESTION ##################################
 
