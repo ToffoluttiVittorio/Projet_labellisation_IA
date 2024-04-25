@@ -103,23 +103,52 @@ export default {
             // Récupérer les données du chantier depuis la réponse
             const chantier = response.data.chantier;
 
-            // Mettre à jour les informations dans la div qui apparaît
-            const openinfo = document.querySelector(".open_info .informations");
-            if (openinfo) {
-              // Remplacer le contenu HTML avec les informations du chantier
-              openinfo.innerHTML = `
-            <h3>${chantier.name}</h3>
-            <p>ID: ${chantier.id}</p>
-            <p>Nom: ${chantier.name}</p>
-            <p>Nomenclature: ${chantier.nomenclature}</p>
-            <p>Nombre d'images: ${chantier.nbr_image}</p>
-            <!-- Ajoutez d'autres informations si nécessaire -->
-          `;
+            // Déclarer une fonction pour obtenir le nom d'un utilisateur
+            const getUserName = (userId) => {
+              return axios
+                .get(`http://localhost:5000/data/user/getUserName?id=${userId}`)
+                .then((res) => res.data.user_name)
+                .catch((error) =>
+                  console.error(
+                    "Erreur lors de la récupération du nom d'utilisateur :",
+                    error
+                  )
+                );
+            };
+            // Effectuer les requêtes pour obtenir les noms
+            Promise.all([
+              getUserName(chantier.createur),
+              getUserName(chantier.annotateur),
+              getUserName(chantier.reviewer),
+            ]).then(([createurName, annotateurName, reviewerName]) => {
+              // Mettre à jour les informations dans la div qui apparaît
+              const openinfo = document.querySelector(
+                ".open_info .informations"
+              );
+              if (openinfo) {
+                // Remplacer le contenu HTML avec les informations du chantier, incluant les noms d'utilisateurs
+                openinfo.innerHTML = `
+                            <h3>${chantier.name}</h3>
+                            <p>ID: ${chantier.id}</p>
+                            <p>Nom: ${chantier.name}</p>
+                            <p>Nomenclature: ${chantier.nomenclature}</p>
+                            <p>Nombre d'images: ${chantier.nbr_image}</p>
+                            <p>URL STAC: ${
+                              chantier.stac_url ? chantier.stac_url : ""
+                            }</p>
+                            <p>Créateur: ${createurName}</p>
+                            <p>Annotateur: ${annotateurName}</p>
+                            <p>Reviewer: ${reviewerName}</p>
+                            <p>Message de révision: ${
+                              chantier.message ? chantier.message : ""
+                            }</p>
+                        `;
 
-              // Afficher la div qui apparaît
-              openinfo.parentElement.style.zIndex = 100;
-              openinfo.parentElement.style.opacity = 1;
-            }
+                // Afficher la div qui apparaît
+                openinfo.parentElement.style.zIndex = 100;
+                openinfo.parentElement.style.opacity = 1;
+              }
+            });
           } else {
             console.error(
               "Erreur: Aucune donnée sur le chantier n'a été récupérée."
@@ -222,10 +251,12 @@ export default {
   width: 80vw;
   height: 78vh;
   max-height: 78vh;
-  /* Hauteur maximale */
   overflow-y: auto;
-  background-color: rgb(169, 28, 28);
+  background-color: rgb(64, 64, 91);
+  color: white;
   border: solid black 5px;
+  border-radius: 8px; /* Ajout des bords arrondis */
+  padding: 8px 16px; /* Ajout de rembourrage pour une meilleure apparence */
   opacity: 0;
   z-index: 0;
 }

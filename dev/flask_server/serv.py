@@ -209,6 +209,18 @@ def get_user_id():
 
     return {'user_id': user.id}
 
+@app.route('/data/user/getUserName', methods=['GET'])
+def get_user_Name():
+    id = request.args.get('id')
+    if not id:
+        return {'error': 'No id provided'}, 400
+    
+    user = User.query.filter_by(id=id).first()
+    if not user:
+        return {'error': 'User not found'}, 404
+
+    return {'user_name': user.username}
+
 @app.route('/data/chantier/delete', methods=['DELETE'])
 def delete_chantier():
     chantier_id = request.args.get('id')
