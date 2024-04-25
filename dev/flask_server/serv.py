@@ -83,6 +83,16 @@ class COG(db.Model):
     data = db.Column(JSONB, nullable=False)
     id_catalogue = db.Column(db.Integer, db.ForeignKey('catalogue.id'), nullable=False)
 
+
+@app.route('/data/chantier/getChantierInfo', methods=['GET'])
+def get_chantier_info():
+    chantier_id = request.args.get('id')
+    chantier = Chantier.query.get(chantier_id)
+    if chantier:
+        return {'chantier': chantier.to_dict()}
+    else:
+        return {'error': 'Chantier introuvable'}, 404
+
 @app.route('/data/test', methods=['POST'])
 def create_test():
     name = request.json.get('name')
@@ -217,6 +227,18 @@ def get_user_id():
         return {'error': 'User not found'}, 404
 
     return {'user_id': user.id}
+
+@app.route('/data/user/getUserName', methods=['GET'])
+def get_user_Name():
+    id = request.args.get('id')
+    if not id:
+        return {'error': 'No id provided'}, 400
+    
+    user = User.query.filter_by(id=id).first()
+    if not user:
+        return {'error': 'User not found'}, 404
+
+    return {'user_name': user.username}
 
 @app.route('/data/chantier/delete', methods=['DELETE'])
 def delete_chantier():
