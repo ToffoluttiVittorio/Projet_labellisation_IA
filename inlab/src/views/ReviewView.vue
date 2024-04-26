@@ -1,4 +1,24 @@
 <template>
+  <div id="table-container">
+    <table id="table-nom">
+      <thead>
+        <tr>
+          <th>Index</th>
+          <th>Nom du champ</th>
+          <th>Couleur</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(field, index) in fields" :key="index">
+          <td>{{ index + 1 }}</td>
+          <td>{{
+            field[0] }}</td>
+          <td :style="{ backgroundColor: field[1] }"> </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
   <div id="images-menu-container">
     <select v-model="selectedImage" @change="handleImageChange">
       <option value="">Sélectionner une image</option>
@@ -12,32 +32,15 @@
   <div id="labellisation-container">
     <div class="app" id="app">
       <div class="app-header">
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value="0.0"
-          id="sliderOpacity"
-          ref="sliderOpacity"
-          @input="updateOpacity"
-        />
+
+        <input type="range" min="0" max="1" step="0.01" value="0.0" id="sliderOpacity" ref="sliderOpacity"
+          @input="updateOpacity" />
       </div>
 
       <div class="app-body">
         <div class="slide-container">
-          <input
-            type="range"
-            min="0"
-            max="1"
-            value="0"
-            step="any"
-            class="slider"
-            id="slider"
-            ref="slider"
-            list="markers"
-            v-model="sliderValue"
-          />
+          <input type="range" min="0" max="1" value="0" step="any" class="slider" id="slider" ref="slider"
+            list="markers" v-model="sliderValue" />
           <div class="slider-values">
             {{ parseFloat(sliderValue) }}
           </div>
@@ -53,11 +56,7 @@
   <div class="textbox-container">
     <textarea class="textbox" ref="textbox" v-model="reviewText"></textarea>
   </div>
-  <button
-    id="nextPatchButton"
-    :disabled="isNextPatchDisabled"
-    @click="setupFileInput"
-  >
+  <button id="nextPatchButton" :disabled="isNextPatchDisabled" @click="setupFileInput">
     Prochain patch
   </button>
   <div class="review-button-container">
@@ -65,18 +64,10 @@
     <button :disabled="isRefusedDisabled" @click="refuser">Refuser</button>
   </div>
   <div>
-    <progress
-      id="progressPatch"
-      :max="totalNumberOfPatches"
-      :value="numberOfPatches"
-    ></progress>
+    <progress id="progressPatch" :max="totalNumberOfPatches" :value="numberOfPatches"></progress>
   </div>
   <div>
-    <progress
-      id="progressImage"
-      :max="numImages"
-      :value="idxImage + 1"
-    ></progress>
+    <progress id="progressImage" :max="numImages" :value="idxImage + 1"></progress>
   </div>
 </template>
 
@@ -172,9 +163,11 @@ export default {
       patchSize: 512,
       geotiff: null,
       isLoading: false,
+      fields: [],
     };
   },
   async mounted() {
+    this.fetchNomenclature(this.id);
     this.$refs.canvasGeojson.width = this.patchSize;
     this.$refs.canvasGeojson.height = this.patchSize;
     this.$refs.canvasVector.width = this.patchSize;
@@ -183,6 +176,24 @@ export default {
     await this.handleImageChange();
   },
   methods: {
+
+    async fetchNomenclature(id) {
+      try {
+        const response = await axios.get(`http://localhost:5000/gestion/nomenclature/${id}`);
+        await this.fetchStylesByNomenclature(response.data.nomenclature);
+      } catch (error) {
+        console.error('Erreur lors de la récupération de la nomenclature:', error);
+      }
+    },
+    async fetchStylesByNomenclature(nomenclatureId) {
+      try {
+        const response = await axios.get(`http://localhost:5000/gestion/nomenclature/${nomenclatureId}/styles`);
+        console.log('Styles de la nomenclature:', response.data.styles);
+        this.fields = response.data.styles.map(style => [style.nom, style.couleur]);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des styles de la nomenclature:', error);
+      }
+    },
     async loadSegmentationValue() {
       await axios
         .get("http://localhost:5000/patch/segmentation_value", {
@@ -921,9 +932,17 @@ export default {
     },
   },
 };
-</script>
 
+</script>
 <style scoped>
+#table-container {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+}
+
 #progressImage {
   position: absolute;
   left: 25%;
@@ -931,6 +950,7 @@ export default {
   top: 15%;
   width: 50%;
 }
+
 #progressPatch {
   position: absolute;
   left: 25%;
@@ -938,6 +958,7 @@ export default {
   top: 10%;
   width: 50%;
 }
+
 .textbox-container {
   position: absolute;
   bottom: 3%;
@@ -946,12 +967,14 @@ export default {
   justify-content: center;
   padding: 10px;
 }
+
 .textbox {
   width: 50%;
   height: 100px;
   padding: 10px;
   resize: none;
 }
+
 .review-button-container {
   position: absolute;
   bottom: 0;
@@ -961,12 +984,14 @@ export default {
   justify-content: center;
   gap: 10px;
 }
+
 #canvasGeojson {
   position: absolute;
   border: 1px solid black;
   position: absolute;
   top: 20%;
 }
+
 #loading-div {
   position: absolute;
   top: 50px;
@@ -974,11 +999,13 @@ export default {
   font-size: 16px;
   color: #333;
 }
+
 #previsualisation {
   position: fixed;
   bottom: 0;
   right: 0;
 }
+
 #nextPatchButton {
   position: absolute;
   bottom: 18%;
@@ -988,6 +1015,7 @@ export default {
   justify-content: center;
   gap: 10px;
 }
+
 #images-menu-container,
 #labellisation-container {
   position: absolute;
@@ -1019,10 +1047,12 @@ export default {
   display: flex;
   flex-direction: row;
 }
+
 input#slider.slider {
   width: 300px;
   display: none;
 }
+
 input[name="range"] {
   position: relative;
   top: 100px;

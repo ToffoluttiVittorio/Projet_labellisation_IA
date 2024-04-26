@@ -24,13 +24,14 @@
             <tr>
               <th>Index</th>
               <th>Nom du champ</th>
+              <th>Couleur</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(field, index) in fields" :key="index">
+            <tr v-for="(field, index) in fields" :key="index" @click="updateClassColorAndName(field[0], field[1])">
               <td>{{ index + 1 }}</td>
-              <td @click="updateClassColorAndName(field[0], field[1])" :style="{ backgroundColor: field[1] }">{{
-                field[0] }}</td>
+              <td>{{ field[0] }}</td>
+              <td :style="{ backgroundColor: field[1] }"> </td>
             </tr>
           </tbody>
         </table>
@@ -45,17 +46,8 @@
 
       <div class="app-body">
         <div class="slide-container">
-          <input
-            type="range"
-            min="0"
-            max="1"
-            value="0"
-            step="any"
-            class="slider"
-            id="slider"
-            list="markers"
-            v-model="sliderValue"
-          />
+          <input type="range" min="0" max="1" value="0" step="any" class="slider" id="slider" list="markers"
+            v-model="sliderValue" />
           <div class="slider-values">
             {{ parseFloat(sliderValue).toFixed(2) }}
           </div>
@@ -164,6 +156,15 @@ export default {
   methods: {
 
     updateClassColorAndName(className, classColor) {
+
+      const selectedCells = document.querySelectorAll('.selected');
+      selectedCells.forEach(cell => {
+        cell.classList.remove('selected');
+      });
+
+      event.target.classList.add('selected');
+
+
       this.className = className;
       this.classColor = classColor;
     },
@@ -706,7 +707,7 @@ export default {
         orderedPixels,
         this.$refs.canvasVector.width
       );
-      
+
       /*const filteredConvPixels = this.convertToCoordinates(
         convOrdPixels,
         this.$refs.canvasVector.width,
@@ -862,6 +863,10 @@ export default {
 </script>
 
 <style>
+.selected {
+  background-color: yellow;
+}
+
 #loading-div {
   position: absolute;
   top: 5vh;

@@ -1,76 +1,74 @@
 <template>
-  <div id="homeview-container">
-    <button @click="logout">Déconnexion</button>
-    <div id="mesChantiers">
-      <h2>Mes chantiers crées</h2>
-      <div class="scroll-container">
-        <div class="chantiers-container" ref="chantiersContainer">
-          <div
-            v-for="(chantier, index) in chantiersCreateur"
-            :key="index"
-            class="chantier-card"
-            :id="chantier.id"
-          >
-            <span>{{ chantier.name }}</span>
-            <button
-              class="btnCancelChantier"
-              @click="deleteChantier(chantier.id)"
-            >
-              X
-            </button>
-            <button
-              class="btnInfo info-button"
-              @click="Open_info(chantier.id, $event)"
-            >
-              Informations
-            </button>
-          </div>
+    <div id="homeview-container">
+        <button @click="logout">Déconnexion</button>
+        <div id="mesChantiers">
+            <h2>Mes chantiers crées</h2>
+            <div class="scroll-container">
+                <div class="chantiers-container" ref="chantiersContainer">
+                    <div v-for="(chantier, index) in chantiersCreateur" :key="index" class="chantier-card"
+                        :id="chantier.id">
+                        <span>{{ chantier.name }}</span>
+                        <button class="btnCancelChantier" @click="deleteChantier(chantier.id)">
+                            X
+                        </button>
+                        <button class="btnInfo info-button" @click="Open_info(chantier.id, $event)">
+                            Informations
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-    <div id="chantiersAnnote">
-      <h2>Les chantiers à annotés</h2>
-      <div class="scroll-container">
-        <div class="chantiers-container" ref="chantiersContainer">
-          <div
-            v-for="(chantier, index) in chantiersAnnotateur"
-            :key="index"
-            class="chantier-card"
-            :id="chantier.id"
-            @click="redirectToLabellisation(chantier.id)"
-          >
-            <span>{{ chantier.name }}</span>
-            <button
-              class="btnInfo info-button"
-              @click="Open_info(chantier.id, $event)"
-            >
-              Informations
-            </button>
-          </div>
+        <div id="chantiersAnnote">
+            <h2>Les chantiers à annotés</h2>
+            <div class="scroll-container">
+                <div class="chantiers-container" ref="chantiersContainer">
+                    <div v-for="(chantier, index) in chantiersAnnotateur" :key="index" class="chantier-card"
+                        :id="chantier.id" @click="redirectToLabellisation(chantier.id)">
+                        <span>{{ chantier.name }}</span>
+                        <button class="btnInfo info-button" @click="Open_info(chantier.id, $event)">
+                            Informations
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-    <div id="chantiersReview">
-      <h2>Les chantiers à review</h2>
-      <div class="scroll-container">
-        <div class="chantiers-container" ref="chantiersContainer">
-          <div
-            v-for="(chantier, index) in chantiersReviewer"
-            :key="index"
-            class="chantier-card"
-            :id="chantier.id"
-            @click="redirectToLabellisation(chantier.id)"
-          >
-            <span>{{ chantier.name }}</span>
-            <button
-              class="btnInfo info-button"
-              @click="Open_info(chantier.id, $event)"
-            >
-              Informations
-            </button>
-          </div>
+        <div id="chantiersReview">
+            <h2>Les chantiers à review</h2>
+            <div class="scroll-container">
+                <div class="chantiers-container" ref="chantiersContainer">
+                    <div v-for="(chantier, index) in chantiersReviewer" :key="index" class="chantier-card"
+                        :id="chantier.id" @click="redirectToReview(chantier.id)">
+                        <span>{{ chantier.name }}</span>
+                        <button class="btnInfo info-button" @click="Open_info(chantier.id, $event)">
+                            Informations
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
+        <div class="open_info">
+            <div class="informations"></div>
+            <div id="table-container">
+                <table id="table-nom">
+                    <thead>
+                        <tr>
+                            <th>Index</th>
+                            <th>Nom du champ</th>
+                            <th>Couleur</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(field, index) in fields" :key="index">
+                            <td>{{ index + 1 }}</td>
+                            <td>{{
+                                field[0] }}</td>
+                            <td :style="{ backgroundColor: field[1] }"> </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button class="btnRetour" @click="hideInfo">Retour</button>
+        </div>
     </div>
     <div class="open_info">
       <div class="informations"></div>
@@ -214,6 +212,7 @@ export default {
               if (openinfo) {
                 // Remplacer le contenu HTML avec les informations du chantier, incluant les noms d'utilisateurs
                 openinfo.innerHTML = `
+
                             <h3>${chantier.name}</h3>
                             <p>ID: ${chantier.id}</p>
                             <p>Nom: ${chantier.name}</p>
@@ -261,11 +260,15 @@ export default {
     redirectToLabellisation(idChantier) {
       this.$router.push(`/labellisation/${idChantier}`);
     },
+    redirectToReview(idChantier) {
+      this.$router.push(`/review/${idChantier}`);
+    },
     logout() {
       sessionStorage.clear();
       this.$router.push(`/login`);
     },
   },
+
 };
 </script>
 
@@ -282,7 +285,6 @@ export default {
   position: relative;
   width: 90%;
   padding: 0 20px;
-
   top: 0%;
   left: 50%;
   transform: translateX(-50%);
@@ -368,5 +370,37 @@ export default {
   padding: 8px 16px;
   opacity: 0;
   z-index: 0;
+}
+
+.btnInfo {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgb(64, 64, 91);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 16px;
+    cursor: pointer;
+    z-index: 20;
+}
+
+.open_info {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80vw;
+    height: 78vh;
+    max-height: 78vh;
+    overflow-y: auto;
+    background-color: rgb(64, 64, 91);
+    color: white;
+    border: solid black 5px;
+    border-radius: 8px;
+    padding: 8px 16px;
+    opacity: 0;
+    z-index: 0;
 }
 </style>
