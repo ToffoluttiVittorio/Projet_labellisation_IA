@@ -161,6 +161,11 @@ export default {
     },
 
     async deleteChantier(chantierId) {
+      /**
+       * Deletes a chantier (construction site) with the specified ID.
+       * @param {number} chantierId - The ID of the chantier to delete.
+       * @returns {Promise<void>} - A promise that resolves when the chantier is successfully deleted.
+       */
       event.stopPropagation();
       await axios
         .delete("http://localhost:5000/data/chantier/delete", {
@@ -178,6 +183,11 @@ export default {
     },
 
     async fetchStylesByNomenclature(nomenclatureId) {
+      /**
+       * Fetches styles by nomenclature ID.
+       * @param {number} nomenclatureId - The ID of the nomenclature.
+       * @returns {Promise<void>} - A promise that resolves when the styles are fetched.
+       */
       try {
         const response = await axios.get(
           `http://localhost:5000/gestion/nomenclature/${nomenclatureId}/styles`
@@ -196,6 +206,12 @@ export default {
     },
 
     Open_info(chantierId, event) {
+      /**
+       * Opens the information about a construction site.
+       *
+       * @param {number} chantierId - The ID of the construction site.
+       * @param {Event} event - The click event.
+       */
       event.stopPropagation(); // Empêche la propagation de l'événement de clic
 
       // Effectuer une requête Axios pour récupérer les informations sur le chantier
@@ -273,7 +289,10 @@ export default {
     },
 
     hideInfo() {
-      // Méthode pour masquer la div d'informations
+      /**
+       * Hides the information div.
+       * This method sets the z-index and opacity of the ".open_info" element to 0, effectively hiding it.
+       */
       const openinfo = document.querySelector(".open_info");
       if (openinfo) {
         openinfo.style.zIndex = 0;
@@ -282,12 +301,25 @@ export default {
     },
 
     redirectToLabellisation(idChantier) {
+      /**
+       * Redirects to the labellisation page for a specific chantier.
+       * @param {number} idChantier - The ID of the chantier to redirect to.
+       */
       this.$router.push(`/labellisation/${idChantier}`);
     },
+
     redirectToReview(idChantier) {
+      /**
+       * Redirects to the review page for a specific project.
+       * @param {number} idChantier - The ID of the project to redirect to.
+       */
       this.$router.push(`/review/${idChantier}`);
     },
+
     logout() {
+      /**
+       * Clears the session storage and redirects the user to the login page.
+       */
       sessionStorage.clear();
       this.$router.push(`/login`);
     },
