@@ -1,3 +1,4 @@
+Copy code
 <template>
   <div id="MapContainer">
     <Map />
@@ -5,6 +6,7 @@
 </template>
 
 <script>
+
 import Map from '../components/Map.vue';
 
 export default {
@@ -14,12 +16,4 @@ export default {
 };
 </script>
 
-<style>
-#MapContainer {
-  position: absolute;
-  top: 5vh;
-  left: 0;
-  width: 100vw;
-  height: 95vh;
-}
-</style>
+<style></style>

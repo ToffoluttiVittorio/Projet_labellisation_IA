@@ -1,12 +1,10 @@
 <template>
 
-    <nav class="navbar">
-        <router-link to="/" class="link">Accueil</router-link>
-        <router-link to="/map" class="link">Carte</router-link>
-        <router-link to="/patch" class="link">Patch</router-link>
-        <router-link to="/labellisation" class="link">Labellisation</router-link>
-        <router-link to="/login" class="auth-link">Login</router-link>
-    </nav>
+  <nav class="navbar">
+    <router-link to="/" class="link">Accueil</router-link>
+    <router-link to="/map" class="link">Carte</router-link>
+    <router-link to="/login" class="auth-link">Login</router-link>
+  </nav>
 
 </template>
 
@@ -43,11 +41,11 @@ export default {
 }
 
 .auth-link {
-    margin: 0 20px;
-    font-size: 1.5vw;
-    font-family: system-ui;
-    color: #fff;
-    text-decoration: none;
+  margin: 0 20px;
+  font-size: 1.5vw;
+  font-family: system-ui;
+  color: #fff;
+  text-decoration: none;
 }
 
 @media (max-width: 800px) {

@@ -17,13 +17,18 @@ ALTER TABLE IF EXISTS public.user
 
 CREATE TABLE public.chantier (
     id SERIAL PRIMARY KEY,
-    id_style INT NOT NULL,
-    code INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    nomenclature INT NOT NULL,
     nbr_image INT NOT NULL,
     stac_url VARCHAR(255) NOT NULL,
-    user_key INT NOT NULL,
-    FOREIGN KEY (user_key) REFERENCES "user"(id),
-    name VARCHAR(255)
+    createur INT NOT NULL,
+    annotateur INT NOT NULL,
+    reviewer INT NOT NULL,
+    message VARCHAR,
+    FOREIGN KEY (createur) REFERENCES "user"(id),
+    FOREIGN KEY (annotateur) REFERENCES "user"(id),
+    FOREIGN KEY (reviewer) REFERENCES "user"(id),
+    reviewed BOOLEAN
 );
 
 ALTER TABLE IF EXISTS public.chantier
@@ -47,8 +52,10 @@ CREATE TABLE public.patch (
     FOREIGN KEY (id_img_sortie) REFERENCES image_sortie(id),
     data JSON,
     i INT,
-    j INT
+    j INT,
+    segmentation_value DOUBLE PRECISION
 );
+
 
 ALTER TABLE IF EXISTS public.patch
 	OWNER to postgres;
