@@ -1,5 +1,4 @@
 <template>
-
   <div id="table-container">
     <table id="table-nom">
       <thead>
@@ -33,6 +32,7 @@
   <div id="labellisation-container">
     <div class="app" id="app">
       <div class="app-header">
+
         <input type="range" min="0" max="1" step="0.01" value="0.0" id="sliderOpacity" ref="sliderOpacity"
           @input="updateOpacity" />
       </div>
@@ -174,7 +174,6 @@ export default {
     this.$refs.canvasVector.height = this.patchSize;
     this.loadReview();
     await this.handleImageChange();
-
   },
   methods: {
 
@@ -195,7 +194,6 @@ export default {
         console.error('Erreur lors de la récupération des styles de la nomenclature:', error);
       }
     },
-
     async loadSegmentationValue() {
       await axios
         .get("http://localhost:5000/patch/segmentation_value", {
@@ -934,18 +932,15 @@ export default {
     },
   },
 };
-</script>w
+
+</script>
 <style scoped>
 #table-container {
-
   position: absolute;
   left: 0;
   top: 50%;
-
   transform: translateY(-50%);
-
   z-index: 10;
-
 }
 
 #progressImage {
