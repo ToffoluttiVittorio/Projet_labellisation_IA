@@ -8,7 +8,11 @@
     <div id="files" class="scrollable">
       <ul>
         <template v-for="folder in folders" :key="folder.name">
-          <folder-component :folder="folder" @toggle="toggleFolder" @updateMap="updateMap" />
+          <folder-component
+            :folder="folder"
+            @toggleFolder="toggleFolder"
+            @updateMap="updateMap"
+          />
         </template>
       </ul>
     </div>
@@ -45,24 +49,44 @@
 
         <div id="nomenclature">
           <div id="nomenclature-select">
-            <label for="nomenclature">Sélectionnez une nomenclature existante :</label>
+            <label for="nomenclature"
+              >Sélectionnez une nomenclature existante :</label
+            >
             <p></p>
-            <input type="file" id="csv-input" accept=".csv" @change="updateNomCsv">
+            <input
+              type="file"
+              id="csv-input"
+              accept=".csv"
+              @change="updateNomCsv"
+            />
             <p></p>
             <select id="nomenclature" @change="getStyles">
               <option value="" disabled selected>
                 Choisissez une nomenclature
               </option>
-              <option v-for="nomenclature in nomenclatures" :value="nomenclature.id">
+              <option
+                v-for="nomenclature in nomenclatures"
+                :value="nomenclature.id"
+              >
                 {{ nomenclature.nom }}
               </option>
             </select>
           </div>
           <form @submit.prevent="handleCreaNomSubmit">
             <label for="textContent">Créer un champs :</label>
-            <input type="text" id="textContent" name="textContent" v-model="textContent" />
+            <input
+              type="text"
+              id="textContent"
+              name="textContent"
+              v-model="textContent"
+            />
             <label for="buttonColor">Couleur:</label>
-            <input type="color" id="buttonColor" name="buttonColor" v-model="buttonColor" />
+            <input
+              type="color"
+              id="buttonColor"
+              name="buttonColor"
+              v-model="buttonColor"
+            />
             <button type="submit">Créer Bouton</button>
           </form>
           <div id="table-container">
@@ -78,7 +102,7 @@
                 <tr v-for="(field, index) in fields" :key="index">
                   <td>{{ index + 1 }}</td>
                   <td>{{ field[0] }}</td>
-                  <td :style="{ backgroundColor: field[1] }"> </td>
+                  <td :style="{ backgroundColor: field[1] }"></td>
                   <td @click="removeField(index)">X</td>
                 </tr>
               </tbody>
@@ -140,18 +164,21 @@ export default {
 
     processData(csv) {
       console.log(this.fields);
-      const lines = csv.split('\n');
+      const lines = csv.split("\n");
       lines.forEach((line, index) => {
-        if (index === 0 || line === '') return;
+        if (index === 0 || line === "") return;
 
-        const columns = line.split(';');
+        const columns = line.split(";");
 
         const code = columns[0];
-        const name = columns[1].replace(/_/g, ' ');
+        const name = columns[1].replace(/_/g, " ");
         const color = columns[2].slice(1, -1);
-        const colorValues = color.split(',');
+        const colorValues = color.split(",");
 
-        this.fields.push([name, `rgb(${colorValues[0]}, ${colorValues[1]}, ${colorValues[2]})`])
+        this.fields.push([
+          name,
+          `rgb(${colorValues[0]}, ${colorValues[1]}, ${colorValues[2]})`,
+        ]);
       });
     },
 
