@@ -30,7 +30,7 @@
           <tbody>
             <tr v-for="(field, index) in fields" :key="index" @click="updateClassColorAndName(field[0], field[1])">
               <td>{{ index + 1 }}</td>
-              <td>{{ field[0] }}</td>
+              <td :class="{ 'selected': index === 0 }">{{ field[0] }}</td>
               <td :style="{ backgroundColor: field[1] }"> </td>
             </tr>
           </tbody>
@@ -124,8 +124,6 @@ export default {
   data() {
     return {
       sliderValue: 0,
-      textContent: "",
-      buttonColor: "",
       hierarchy: null,
       tiff: null,
       geoJSON: {
@@ -164,7 +162,6 @@ export default {
 
       event.target.classList.add('selected');
 
-
       this.className = className;
       this.classColor = classColor;
     },
@@ -180,8 +177,9 @@ export default {
     async fetchStylesByNomenclature(nomenclatureId) {
       try {
         const response = await axios.get(`http://localhost:5000/gestion/nomenclature/${nomenclatureId}/styles`);
-        console.log('Styles de la nomenclature:', response.data.styles);
         this.fields = response.data.styles.map(style => [style.nom, style.couleur]);
+        this.className = response.data.styles[0].couleur;
+        this.classColor = response.data.styles[0].couleur;
       } catch (error) {
         console.error('Erreur lors de la récupération des styles de la nomenclature:', error);
       }
@@ -328,8 +326,9 @@ export default {
     },
 
     async setupFileInput() {
+      this.sliderValue = 0;
       const arrayBuffer = await this.getPatch();
-      this.processTiff(arrayBuffer);
+      await this.processTiff(arrayBuffer);
     },
 
     async readTiff(buffer) {
@@ -361,8 +360,7 @@ export default {
     },
 
     async processTiff(buffer) {
-      const test = await this.getPatch();
-      this.tiff = await this.readTiff(test);
+      this.tiff = await this.readTiff(buffer);
 
       const clusterCount = Math.round(
         (this.tiff.width * this.tiff.height) / 200
@@ -408,8 +406,21 @@ export default {
         canvas.height
       );
 
-      this.varFill = this.fillRegion(labels, neighboringRegions);
-      this.$refs.canvasVector.addEventListener("click", this.varFill);
+      if (this.varFill) {
+        this.$refs.canvasVector.removeEventListener("click", this.varFill);
+        const neighboringRegions = this.findNeighboringRegions(
+          labels,
+          canvas.width,
+          canvas.height
+        );
+        this.varFill = this.fillRegion(labels, neighboringRegions);
+        this.$refs.canvasVector.addEventListener("click", this.varFill);
+      } else {
+        this.varFill = this.fillRegion(labels, neighboringRegions);
+        this.$refs.canvasVector.addEventListener("click", this.varFill);
+      }
+
+
     },
 
     convertToGeographicCoords(x, y) {
