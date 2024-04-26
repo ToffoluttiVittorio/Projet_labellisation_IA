@@ -10,7 +10,7 @@
       <template v-for="subfolder in folder.subfolders" :key="subfolder.name">
         <FolderComponent
           :folder="subfolder"
-          @toggle="toggleFolder"
+          @toggleFolder="toggleFolder"
           @updateMap="updateMap"
         />
       </template>
