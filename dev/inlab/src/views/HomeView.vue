@@ -29,7 +29,7 @@
       </div>
     </div>
     <div id="chantiersAnnote">
-      <h2>Les chantiers à annotés</h2>
+      <h2>Les chantiers à annoter</h2>
       <div class="scroll-container">
         <div class="chantiers-container" ref="chantiersContainer">
           <div

@@ -394,8 +394,8 @@ export default {
         this.numPatchesX = Math.ceil(imageWidth / this.patchSize);
         this.numPatchesY = Math.ceil(imageHeight / this.patchSize);
 
-        // this.i = Math.floor(Math.random() * this.numPatchesX);
-        // this.j = Math.floor(Math.random() * this.numPatchesY);
+        this.i = Math.floor(Math.random() * this.numPatchesX);
+        this.j = Math.floor(Math.random() * this.numPatchesY);
 
         const offsetX = this.i * this.patchSize;
         const offsetY = this.j * this.patchSize;
