@@ -1,5 +1,5 @@
 <template>
-  <li>
+  <p>
     <input
       type="checkbox"
       v-model="folder.checked"
@@ -14,16 +14,16 @@
           @updateMap="updateMap"
         />
       </template>
-      <li v-for="file in folder.files" :key="file.href">
-        {{ file.href }}
+      <p v-for="file in folder.files" :key="file.href">
         <input
           type="checkbox"
           v-model="file.checked"
           @change="updateMap(file)"
         />
-      </li>
+        {{ file.href }}
+      </p>
     </ul>
-  </li>
+  </p>
 </template>
 
 <style scoped></style>

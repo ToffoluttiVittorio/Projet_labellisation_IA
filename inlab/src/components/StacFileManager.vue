@@ -3,6 +3,7 @@
     <h2>STAC File Manager</h2>
 
     <form @submit.prevent="loadStac">
+      Enter STAC URL:
       <input type="text" v-model="url" placeholder="Enter URL" />
       <button type="submit">Enter</button>
     </form>
@@ -17,16 +18,36 @@
         </template>
       </ul>
     </div>
+    <div id="selectedFiles">
+      <h2>Selected Layers</h2>
+      <ul>
+        <p
+          v-for="(layer, key) in selectedLayers"
+          :key="key"
+          @click="zoomToLayer(layer)"
+        >
+          {{ key }}
+        </p>
+      </ul>
+    </div>
     <button @click="saveProject">Enregistrer le chantier</button>
   </div>
 </template>
 
 <style>
+#selectedFiles {
+  margin-top: 20px;
+  overflow-y: auto;
+  height: 30%;
+}
+p {
+  text-align: left;
+}
 li {
   text-align: left;
 }
 .scrollable {
-  height: 80%;
+  height: 50%;
   overflow-y: auto;
 }
 </style>
@@ -58,6 +79,8 @@ export default {
       if (!folder.opened) {
         for (let file of folder.files) {
           await this.createStacLayer(file, folder);
+          let panAssetHref = await this.getPanAssetHref(file.href);
+          console.log(this.layers[panAssetHref]);
         }
         folder.opened = true;
       }
@@ -128,6 +151,7 @@ export default {
         console.error("Error loading STAC:", error);
       }
     },
+
     async updateMap(file) {
       let panAssetHref = await this.getPanAssetHref(file.href);
       if (file.checked) {
@@ -146,9 +170,11 @@ export default {
         }
       }
     },
+
     intersectsCoordinate(extent, coordinate) {
       return containsCoordinate(extent, coordinate);
     },
+
     async createStacLayer(file, folder) {
       let panAssetHref = await this.getPanAssetHref(file.href);
       let stac = new STACLayer({ url: file.href });
@@ -158,11 +184,14 @@ export default {
       stac.on("sourceready", () => {
         this.map.map.on("click", (event) => {
           if (this.intersectsCoordinate(stac.getExtent(), event.coordinate)) {
+            console.log(stac);
+            console.log(stac.getExtent());
             this.selectStacLayer(stac, folder);
           }
         });
       });
     },
+
     async removeStacLayer(file) {
       let panAssetHref = await this.getPanAssetHref(file.href);
       let stac = this.layers[panAssetHref];
@@ -186,6 +215,10 @@ export default {
           this.updateMap(file);
         }
       });
+    },
+
+    zoomToLayer(layer) {
+      this.map.map.getView().fit(layer.getExtent());
     },
 
     async getPanAssetHref(url) {
