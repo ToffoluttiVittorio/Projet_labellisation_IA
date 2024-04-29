@@ -188,7 +188,7 @@ export default {
       numImages: 0,
       totalNumberOfPatches: 0,
       numberOfPatches: 0,
-      reviewPercentage: 0.05,
+      reviewPercentage: 0.3,
       reviewText: "",
       sliderValue: 0,
       textContent: "",
