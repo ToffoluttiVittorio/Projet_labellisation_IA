@@ -3,17 +3,17 @@
 </template>
 
 <script>
-import Map from './components/Map.vue'
+import Map from "./components/Map.vue";
 
 export default {
-  name: 'App',
+  name: "App",
   components: {
-    Map
-  }
-}
+    Map,
+  },
+};
 </script>
 
-<style>
+<style scoped>
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
