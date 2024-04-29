@@ -34,63 +34,30 @@
   <div id="labellisation-container">
     <div class="app" id="app">
       <div class="app-header">
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value="0.0"
-          id="sliderOpacity"
-          ref="sliderOpacity"
-          @input="updateOpacity"
-        />
+        <input type="range" min="0" max="1" step="0.01" value="0.0" id="sliderOpacity" ref="sliderOpacity"
+          @input="updateOpacity" />
       </div>
 
       <div class="app-body">
         <div class="slider-container">
-          <input
-            type="range"
-            min="0"
-            max="1"
-            value="0"
-            step="any"
-            class="slider"
-            id="slider"
-            ref="slider"
-            list="markers"
-            v-model="sliderValue"
-          />
+          <input type="range" min="0" max="1" value="0" step="any" class="slider" id="slider" ref="slider"
+            list="markers" v-model="sliderValue" />
           <div class="slide-values"></div>
         </div>
         <div class="canvas-container">
           <canvas class="canvas" id="canvas" ref="canvas"></canvas>
-          <canvas
-            class="canvas"
-            id="canvasVector"
-            ref="canvasVector"
-            :width="this.patchSize"
-            :height="this.patchSize"
-          ></canvas>
+          <canvas class="canvas" id="canvasVector" ref="canvasVector" :width="this.patchSize"
+            :height="this.patchSize"></canvas>
         </div>
       </div>
     </div>
   </div>
-  <canvas
-    id="canvasGeojson"
-    ref="canvasGeojson"
-    :width="this.patchSize"
-    :height="this.patchSize"
-  ></canvas>
+  <canvas id="canvasGeojson" ref="canvasGeojson" :width="this.patchSize" :height="this.patchSize"></canvas>
   <div class="textbox-container">
     <textarea class="textbox" ref="textbox" v-model="reviewText"></textarea>
   </div>
-  <button
-    id="nextPatchButton"
-    ref="nextPatchButton"
-    :disabled="isNextPatchDisabled"
-    :style="{ backgroundColor: isNextPatchDisabled ? '#808080' : '#04aa6d' }"
-    @click="setupFileInput"
-  >
+  <button id="nextPatchButton" ref="nextPatchButton" :disabled="isNextPatchDisabled"
+    :style="{ backgroundColor: isNextPatchDisabled ? '#808080' : '#04aa6d' }" @click="setupFileInput">
     Prochain patch
   </button>
   <div class="review-button-container">
@@ -100,12 +67,8 @@
 
   <div class="progressPatch-container">
     <div id="patch-bar-label">Patch</div>
-    <progress
-      id="progressPatch"
-      ref="progressPatch"
-      :max="totalNumberOfPatches"
-      :value="totalNumberOfPatches - numberOfPatches"
-    ></progress>
+    <progress id="progressPatch" ref="progressPatch" :max="totalNumberOfPatches"
+      :value="totalNumberOfPatches - numberOfPatches"></progress>
     <div class="progressPatch-text">
       {{
         totalNumberOfPatches === 0
@@ -309,6 +272,10 @@ export default {
     },
     drawCanvas() {
       // Construire le nom de la table
+      let canvas = this.$refs.canvasGeojson;
+      let context = canvas.getContext("2d");
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
       let tableName = `image_${this.selectedImage.id}_patch_${this.i}_${this.j}`;
       axios
         .get(`http://localhost:5000/patch/image_png/${tableName}`)
@@ -316,8 +283,6 @@ export default {
           let base64String = response.data.image_png;
           let image = new Image();
           image.onload = () => {
-            let canvas = this.$refs.canvasGeojson;
-            let context = canvas.getContext("2d");
             context.drawImage(image, 0, 0);
           };
           image.src = "data:image/png;base64," + base64String;
@@ -993,6 +958,7 @@ export default {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -1002,6 +968,7 @@ export default {
   margin-top: 20px;
   text-align: center;
 }
+
 #table-container {
   border-collapse: collapse;
   position: absolute;

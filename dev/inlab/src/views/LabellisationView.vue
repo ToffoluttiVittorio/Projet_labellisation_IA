@@ -1,10 +1,6 @@
 <template>
   <div id="images-menu-container">
-    <select
-      class="select-menu"
-      v-model="selectedImage"
-      @change="handleImageChange"
-    >
+    <select class="select-menu" v-model="selectedImage" @change="handleImageChange">
       <option value="">Sélectionner une image</option>
       <option v-for="image in images" :key="image.id" :value="image">
         {{ image.name }}
@@ -19,15 +15,7 @@
   <div id="labellisation-container">
     <div class="app" id="app">
       <div class="app-header">
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value="0.2"
-          id="sliderOpacity"
-          @input="updateOpacity"
-        />
+        <input type="range" min="0" max="1" step="0.01" value="0.2" id="sliderOpacity" @input="updateOpacity" />
         <button class="export" @click="exportImage">exporter</button>
         <button class="enregistrer" @click="vectorize">
           Enregistrer le patch
@@ -44,11 +32,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="(field, index) in fields"
-              :key="index"
-              @click="updateClassColorAndName(field[0], field[1])"
-            >
+            <tr v-for="(field, index) in fields" :key="index" @click="updateClassColorAndName(field[0], field[1])">
               <td>{{ index + 1 }}</td>
               <td :class="{ selected: index === 0 }">{{ field[0] }}</td>
               <td :style="{ backgroundColor: field[1] }"></td>
@@ -66,41 +50,22 @@
 
       <div class="app-body">
         <div class="slide-container">
-          <input
-            type="range"
-            min="0"
-            max="1"
-            value="0"
-            step="any"
-            class="slider"
-            id="slider"
-            list="markers"
-            v-model="sliderValue"
-          />
+          <input type="range" min="0" max="1" value="0" step="any" class="slider" id="slider" list="markers"
+            v-model="sliderValue" />
           <div class="slider-values">
             {{ parseFloat(sliderValue).toFixed(2) }}
           </div>
         </div>
         <div class="canvas-container">
           <canvas class="canvas" id="canvas" ref="canvas"></canvas>
-          <canvas
-            class="canvas"
-            id="canvasVector"
-            ref="canvasVector"
-            :width="this.patchSize"
-            :height="this.patchSize"
-          ></canvas>
+          <canvas class="canvas" id="canvasVector" ref="canvasVector" :width="this.patchSize"
+            :height="this.patchSize"></canvas>
         </div>
       </div>
     </div>
   </div>
 
-  <canvas
-    id="previsualisation"
-    ref="canvasPrevisu"
-    width="300"
-    height="300"
-  ></canvas>
+  <canvas id="previsualisation" ref="canvasPrevisu" width="300" height="300"></canvas>
 </template>
 
 <script>
@@ -300,7 +265,7 @@ export default {
       }
     },
 
-    moveRight() {
+    async moveRight() {
       /**
        * Moves the selection to the right.
        * If the current index is less than the number of patches in the X direction minus 1,
@@ -390,11 +355,11 @@ export default {
       // Draw grid on the canvas
       for (let x = 0; x < this.numPatchesX; x++) {
         for (let y = 0; y < this.numPatchesY; y++) {
-          ctx.strokeStyle = "black";
+          // ctx.fillStyle = x === this.i && y === this.j ? "red" : "rgba(0, 0, 0, 0)";
+          // ctx.fillRect(x * rectWidth, y * rectHeight, rectWidth, rectHeight);
+          ctx.strokeStyle = x === this.i && y === this.j ? "red" : "black";
+          ctx.lineWidth = x === this.i && y === this.j ? "5" : "1";
           ctx.strokeRect(x * rectWidth, y * rectHeight, rectWidth, rectHeight);
-          ctx.fillStyle =
-            x === this.i && y === this.j ? "red" : "rgba(0, 0, 0, 0)";
-          ctx.fillRect(x * rectWidth, y * rectHeight, rectWidth, rectHeight);
         }
       }
 
@@ -409,9 +374,11 @@ export default {
           response.data.forEach((patch) => {
             const x = patch.i;
             const y = patch.j;
-
             ctx.fillStyle = "green";
             ctx.fillRect(x * rectWidth, y * rectHeight, rectWidth, rectHeight);
+            ctx.strokeStyle = x === this.i && y === this.j ? "red" : "black";
+            ctx.lineWidth = x === this.i && y === this.j ? "5" : "1";
+            ctx.strokeRect(x * rectWidth, y * rectHeight, rectWidth, rectHeight);
           });
         })
         .catch((error) => {
@@ -454,6 +421,7 @@ export default {
        */
       this.sliderValue = 0;
       const arrayBuffer = await this.getPatch();
+      console.log('fait getPatch');
       await this.processTiff(arrayBuffer);
     },
 
@@ -573,7 +541,7 @@ export default {
       return proj4(sourceProjection, destProjection, [x, y]);
     },
 
-    vectorize() {
+    async vectorize() {
       /**
        * Converts the geoJSON data to a JSON string, creates a Blob object with the JSON content,
        * and downloads it as a file. Then, sends a POST request to save the patch data to the server.
@@ -582,13 +550,13 @@ export default {
        */
       const jsonContent = JSON.stringify(this.geoJSON);
       const blob = new Blob([jsonContent], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "geojson_data.json";
-      document.body.appendChild(a);
-      a.click();
-      URL.revokeObjectURL(url);
+      // const url = URL.createObjectURL(blob);
+      // const a = document.createElement("a");
+      // a.href = url;
+      // a.download = "geojson_data.json";
+      // document.body.appendChild(a);
+      // a.click();
+      // URL.revokeObjectURL(url);
       axios
         .post("http://localhost:5000/save_patch", {
           name: `image_${this.selectedImage.id}_patch_${this.i}_${this.j}`,
@@ -601,10 +569,30 @@ export default {
         })
         .then((response) => {
           console.log(response);
+          let ctxVector = this.$refs.canvasVector.getContext("2d");
+          ctxVector.clearRect(0, 0, canvas.width, canvas.height);
+
+          if (this.i === this.numPatchesX - 1 && this.j != this.numPatchesY - 1) {
+            this.i = 0;
+            this.j += 1;
+            this.setupFileInput();
+          } else if (this.i == this.numPatchesX - 1 && this.j == this.numPatchesY - 1) {
+            console.log('dernier');
+            this.setupFileInput();
+          } else {
+            this.moveRight();
+          }
         })
         .catch((error) => {
           console.log(error);
         });
+
+      this.geoJSON = {
+        type: "FeatureCollection",
+        features: [],
+      };
+
+
     },
 
     toBlob() {
@@ -966,14 +954,14 @@ export default {
         coordinates: [convOrdPixels],
       };
 
-      this.geoJSON.features.push({
-        type: "Feature",
-        geometry: outerPolygon,
-        properties: {
-          class_name: this.className,
-          class_color: this.classColor,
-        },
-      });
+      // this.geoJSON.features.push({
+      //   type: "Feature",
+      //   geometry: outerPolygon,
+      //   properties: {
+      //     class_name: this.className,
+      //     class_color: this.classColor,
+      //   },
+      // });
 
       const holesPolygons = [];
       holesInReg.forEach((holePixels, holeRegion) => {
@@ -1115,7 +1103,7 @@ export default {
       canvas.height = this.tiff.height;
       ctx.drawImage(imageBitmap, 0, 0);
 
-      ctxVector.clearRect(0, 0, canvas.width, canvas.height);
+      // ctxVector.clearRect(0, 0, canvas.width, canvas.height);
 
       if (this.varFill) {
         this.$refs.canvasVector.removeEventListener("click", this.varFill);
@@ -1128,10 +1116,10 @@ export default {
         this.$refs.canvasVector.addEventListener("click", this.varFill);
       }
 
-      this.geoJSON = {
-        type: "FeatureCollection",
-        features: [],
-      };
+      // this.geoJSON = {
+      //   type: "FeatureCollection",
+      //   features: [],
+      // };
     },
   },
 };
@@ -1141,14 +1129,17 @@ export default {
 .export {
   display: none;
 }
+
 ::selection {
   background: #04aa6d;
   color: white;
 }
+
 ::-moz-selection {
   background: #04aa6d;
   color: white;
 }
+
 .select-menu {
   width: 90vw;
   padding: 4px;
@@ -1158,6 +1149,7 @@ export default {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
   border: 1px solid #04aa6d;
 }
+
 .loading-container {
   position: fixed;
   top: 50%;
@@ -1189,6 +1181,7 @@ export default {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -1207,6 +1200,7 @@ input[type="range"]::-moz-range-progress {
 input[type="range"]::-moz-range-track {
   background: #ccc;
 }
+
 #table-container {
   border-collapse: collapse;
   position: absolute;

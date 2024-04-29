@@ -1,9 +1,9 @@
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE user
 INSERT INTO public.user (username,password) VALUES
-('lem','m'),
-('leh','1234'),
-('lev','v'),
-('lef','f');
+('lem','$2b$12$YXcYeaRXilIr9qoTsEC50e3Vt6rQtlhO5LVP.S34P9.8Qp97CyKmS'),
+('leh','$2b$12$t7I.kRd0ZR3M3Z4CQlxaM.clIOp8yGkcYUBo14Fi51tJCnmUJhkQ.'),
+('lev','$2b$12$J3sF5DCuKx24Eh/ci08baePD9rcYIUb/B4eZRqdiZXhVe3sh/PhF6'),
+('lef','$2b$12$sWHkNzLjA/D/MVyWhEDrZeEg7hbaOvehUhxBJnYaEutXt83vXtiTq');
 
 
 -- INSERTION DE DONNÉES DE TEST POUR LA TABLE Chantier

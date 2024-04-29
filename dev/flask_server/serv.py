@@ -5,8 +5,10 @@ from sqlalchemy.dialects.postgresql import JSONB, DOUBLE_PRECISION
 from sqlalchemy import ARRAY
 import base64
 from io import BytesIO
+from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
+bcrypt = Bcrypt(app)
 CORS(app)
 # Configure SQLAlchemy for the first database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhost:8888/data'
@@ -347,7 +349,7 @@ def login():
 
     user = User.query.filter_by(username=username).first()
     if user:
-        if user.password == password:
+        if bcrypt.check_password_hash(user.password, password):
             return {'message': 'Connexion réussie'}, 200
         else:
             return {'error': 'Mot de passe incorrect'}, 401
@@ -379,7 +381,8 @@ def signup():
     if existing_user:
         return {'message': 'Nom d\'utilisateur déjà pris'}, 400
 
-    new_user = User(username=username, password=password)
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    new_user = User(username=username, password=hashed_password)
     db.session.add(new_user)
     db.session.commit()
 
