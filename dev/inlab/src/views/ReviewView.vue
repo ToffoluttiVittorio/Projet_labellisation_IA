@@ -310,47 +310,17 @@ export default {
     drawCanvas() {
       // Construire le nom de la table
       let tableName = `image_${this.selectedImage.id}_patch_${this.i}_${this.j}`;
-
-      // Faire une requête axios pour récupérer le GeoJSON
       axios
-        .get(`http://localhost:5000/get_patch_by_name/${tableName}`)
+        .get(`http://localhost:5000/patch/image_png/${tableName}`)
         .then((response) => {
-          // Récupérer le GeoJSON de la réponse
-          let geojson = response.data[0].data;
-          console.log(geojson);
-
-          let canvas = this.$refs.canvasGeojson;
-          canvas.width = this.patchSize;
-          canvas.height = this.patchSize;
-          let ctx = canvas.getContext("2d");
-
-          // Parcourir chaque feature dans le GeoJSON
-          for (let feature of geojson.features) {
-            // Commencer un nouveau chemin pour la feature
-            ctx.beginPath();
-
-            // Parcourir chaque coordonnée dans la feature
-            for (let i = 0; i < feature.geometry.coordinates[0].length; i++) {
-              let coordinate = feature.geometry.coordinates[0][i];
-
-              // Pour le premier point, déplacer le chemin à ce point
-              if (i === 0) {
-                ctx.moveTo(coordinate[1], coordinate[0]);
-              }
-              // Pour les points suivants, ajouter une ligne au point
-              else {
-                ctx.lineTo(coordinate[1], coordinate[0]);
-              }
-            }
-
-            // Fermer le chemin et le remplir
-            ctx.closePath();
-            ctx.fillStyle = feature.properties.class_color;
-            ctx.fill();
-          }
-        })
-        .catch((error) => {
-          console.log("Pas de GeoJSON pour ce patch.");
+          let base64String = response.data.image_png;
+          let image = new Image();
+          image.onload = () => {
+            let canvas = this.$refs.canvasGeojson;
+            let context = canvas.getContext("2d");
+            context.drawImage(image, 0, 0);
+          };
+          image.src = "data:image/png;base64," + base64String;
         });
     },
     async loadGeoTIFF(url) {
@@ -424,8 +394,8 @@ export default {
         this.numPatchesX = Math.ceil(imageWidth / this.patchSize);
         this.numPatchesY = Math.ceil(imageHeight / this.patchSize);
 
-        this.i = Math.floor(Math.random() * this.numPatchesX);
-        this.j = Math.floor(Math.random() * this.numPatchesY);
+        // this.i = Math.floor(Math.random() * this.numPatchesX);
+        // this.j = Math.floor(Math.random() * this.numPatchesY);
 
         const offsetX = this.i * this.patchSize;
         const offsetY = this.j * this.patchSize;

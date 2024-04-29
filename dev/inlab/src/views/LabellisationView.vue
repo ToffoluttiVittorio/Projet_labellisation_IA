@@ -597,6 +597,7 @@ export default {
           i: this.i,
           j: this.j,
           segmentation_value: parseFloat(this.sliderValue),
+          image_png: this.toBlob(),
         })
         .then((response) => {
           console.log(response);
@@ -604,6 +605,12 @@ export default {
         .catch((error) => {
           console.log(error);
         });
+    },
+
+    toBlob() {
+      let canvas = this.$refs.canvasVector;
+      let dataUrl = canvas.toDataURL("image/png");
+      return dataUrl;
     },
 
     exportImage() {
@@ -903,7 +910,7 @@ export default {
             !neighbors.has(labels[x * width + y]))
         ) {
           pointsSeg.push([y, x]);
-          ctxVector.fillStyle = "rgb(255,255,255)";
+          ctxVector.fillStyle = "rgb(0,0,0)";
           ctxVector.fillRect(y, x, 1, 1);
           continue;
         }
@@ -1316,7 +1323,6 @@ div.button-container {
   width: 100vw;
   height: 90vh;
 }
-
 
 #labellisation-container {
   top: 10vh;

@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from sqlalchemy.dialects.postgresql import JSONB, DOUBLE_PRECISION
 from sqlalchemy import ARRAY
+import base64
+from io import BytesIO
 
 app = Flask(__name__)
 CORS(app)
@@ -109,9 +111,10 @@ class Patch(db.Model):
     i = db.Column(db.Integer)
     j = db.Column(db.Integer)
     segmentation_value = db.Column(DOUBLE_PRECISION)
+    image_png = db.Column(db.LargeBinary)
 
     def to_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns if c.name != 'image_png'}
 
 class Catalogue(db.Model):
     """
@@ -473,6 +476,10 @@ def save_patch():
     i = data.get('i')
     j = data.get('j')
     segmentation_value = data.get('segmentation_value')
+    data_url = data.get('image_png')
+    header, encoded = data_url.split(",", 1)
+    data2 = base64.b64decode(encoded)
+    image_png = data2
 
     if not name or not id_img_sortie or not geoJSON or i is None or j is None:
         return "Error: All fields must be filled", 400
@@ -483,9 +490,10 @@ def save_patch():
         # Patch exists, update data
         patch.data = geoJSON
         patch.segmentation_value = segmentation_value
+        patch.image_png = image_png 
     else:
         # Patch does not exist, create new
-        patch = Patch(name=name, id_img_sortie=id_img_sortie, data=geoJSON, i=i, j=j, segmentation_value=segmentation_value)
+        patch = Patch(name=name, id_img_sortie=id_img_sortie, data=geoJSON, i=i, j=j, segmentation_value=segmentation_value, image_png=image_png)
         db.session.add(patch)
 
     db.session.commit()
@@ -545,6 +553,8 @@ def get_patch_by_name(name):
         return jsonify(patches_dict), 200
     else:
         return "Error: No patch found with this name", 404
+
+
 
 @app.route('/chantier/accepter', methods=['POST'])
 def accepter_chantier():
@@ -612,6 +622,18 @@ def get_patch_segmentation_value():
         return {"segmentation_value": patch.segmentation_value}
     else:
         return {"error": "No patch found with this name"}, 404
+
+@app.route('/patch/image_png/<name>', methods=['GET'])
+def get_patch_image_png(name):
+    patch = Patch.query.filter_by(name=name).first()
+
+    if patch:
+        # Convert binary data to base64 string
+        image_png_base64 = base64.b64encode(patch.image_png).decode()
+
+        return jsonify({'image_png': image_png_base64}), 200
+    else:
+        return "Error: No patch found with this name", 404
 
 ################################## BDD GESTION ##################################
 

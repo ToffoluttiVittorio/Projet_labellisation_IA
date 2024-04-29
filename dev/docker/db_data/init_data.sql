@@ -53,7 +53,8 @@ CREATE TABLE public.patch (
     data JSON,
     i INT,
     j INT,
-    segmentation_value DOUBLE PRECISION
+    segmentation_value DOUBLE PRECISION,
+    image_png BYTEA
 );
 
 
