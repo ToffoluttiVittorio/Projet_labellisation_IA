@@ -107,11 +107,10 @@ Et les dépendances en développement :
 
 Voici les principales dépendances :
 
-- [Flask](https://flask.palletsprojects.com/en/2.1.x/): A micro web framework written in Python.
-- [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/en/2.x/): An extension for Flask that adds support for SQLAlchemy to your application.
-- [Flask-CORS](https://flask-cors.readthedocs.io/en/latest/): A Flask extension for handling Cross Origin Resource Sharing (CORS), making cross-origin AJAX possible.
-- [base64](https://docs.python.org/3/library/base64.html): A built-in Python library for encoding and decoding using base64 encodings.
-- [BytesIO](https://docs.python.org/3/library/io.html#io.BytesIO): A built-in Python library for reading and writing bytes in memory.
-- [Flask-Bcrypt](https://flask-bcrypt.readthedocs.io/en/latest/): A Flask extension that provides bcrypt hashing utilities for your application.
-
+- [Flask](https://flask.palletsprojects.com/en/2.1.x/)
+- [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/en/2.x/)
+- [Flask-CORS](https://flask-cors.readthedocs.io/en/latest/)
+- [base64](https://docs.python.org/3/library/base64.html)
+- [BytesIO](https://docs.python.org/3/library/io.html#io.BytesIO)
+- [Flask-Bcrypt](https://flask-bcrypt.readthedocs.io/en/latest/)
 
