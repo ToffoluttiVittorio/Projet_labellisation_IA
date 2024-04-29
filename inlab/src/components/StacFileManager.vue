@@ -7,7 +7,7 @@
       <button type="submit">Enter</button>
     </form>
     <div id="files" class="scrollable">
-      <ul>
+      <div class="styletest">
         <template v-for="folder in folders" :key="folder.name">
           <folder-component
             :folder="folder"
@@ -15,11 +15,11 @@
             @updateMap="updateMap"
           />
         </template>
-      </ul>
+      </div>
     </div>
+    <h2>Selected Layers</h2>
     <div id="selectedFiles">
-      <h2>Selected Layers</h2>
-      <ul>
+      <div class="styletest">
         <p
           v-for="(layer, key) in selectedLayers"
           :key="key"
@@ -27,7 +27,7 @@
         >
           {{ key }}
         </p>
-      </ul>
+      </div>
     </div>
     <button @click="saveProject">Enregistrer le chantier</button>
   </div>
@@ -128,24 +128,6 @@
     </form>
   </div>
 </template>
-
-<style>
-#selectedFiles {
-  margin-top: 20px;
-  overflow-y: auto;
-  height: 30%;
-}
-p {
-  text-align: left;
-}
-li {
-  text-align: left;
-}
-.scrollable {
-  height: 50%;
-  overflow-y: auto;
-}
-</style>
 
 <script>
 import * as STAC from "./stac.js";
@@ -656,10 +638,10 @@ export default {
 
 .stac-container {
   position: absolute;
-  left: 0;
+  left: +10;
   top: 5vh;
-  width: 25%;
   height: 95vh;
+  width: 25%;
   overflow: auto;
   border-right: 1px solid #ccc;
 
@@ -672,7 +654,7 @@ li {
 }
 
 .scrollable {
-  height: 80%;
+  height: 43%;
   overflow-y: auto;
 }
 
@@ -689,5 +671,29 @@ li {
 #nomenclature form {
   display: flex;
   align-items: center;
+}
+
+#selectedFiles {
+  margin-top: 20px;
+  overflow-y: auto;
+  height: 35%;
+}
+
+#selectedFiles p {
+  border: 3px black solid;
+  margin-right: 15px;
+  border-radius: 5px;
+  text-align: left;
+  overflow: hidden;
+}
+
+p {
+  text-align: left;
+  padding: 5px;
+  text-overflow: clip;
+}
+
+li {
+  text-align: left;
 }
 </style>
