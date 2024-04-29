@@ -11,9 +11,8 @@
       <tbody>
         <tr v-for="(field, index) in fields" :key="index">
           <td>{{ index + 1 }}</td>
-          <td>{{
-            field[0] }}</td>
-          <td :style="{ backgroundColor: field[1] }"> </td>
+          <td>{{ field[0] }}</td>
+          <td :style="{ backgroundColor: field[1] }"></td>
         </tr>
       </tbody>
     </table>
@@ -27,47 +26,101 @@
       </option>
     </select>
   </div>
-  <div id="loading-div" v-if="isLoading">Loading GeoTIFF...</div>
+  <div class="loading-container" v-if="isLoading">
+    <div class="loader"></div>
+    <div class="loading-text">Chargement du geotiff...</div>
+  </div>
 
   <div id="labellisation-container">
     <div class="app" id="app">
       <div class="app-header">
-
-        <input type="range" min="0" max="1" step="0.01" value="0.0" id="sliderOpacity" ref="sliderOpacity"
-          @input="updateOpacity" />
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value="0.0"
+          id="sliderOpacity"
+          ref="sliderOpacity"
+          @input="updateOpacity"
+        />
       </div>
 
       <div class="app-body">
-        <div class="slide-container">
-          <input type="range" min="0" max="1" value="0" step="any" class="slider" id="slider" ref="slider"
-            list="markers" v-model="sliderValue" />
-          <div class="slider-values">
-            {{ parseFloat(sliderValue) }}
-          </div>
+        <div class="slider-container">
+          <input
+            type="range"
+            min="0"
+            max="1"
+            value="0"
+            step="any"
+            class="slider"
+            id="slider"
+            ref="slider"
+            list="markers"
+            v-model="sliderValue"
+          />
+          <div class="slide-values"></div>
         </div>
         <div class="canvas-container">
           <canvas class="canvas" id="canvas" ref="canvas"></canvas>
-          <canvas class="canvas" id="canvasVector" ref="canvasVector"></canvas>
+          <canvas
+            class="canvas"
+            id="canvasVector"
+            ref="canvasVector"
+            :width="this.patchSize"
+            :height="this.patchSize"
+          ></canvas>
         </div>
       </div>
     </div>
   </div>
-  <canvas id="canvasGeojson" ref="canvasGeojson"></canvas>
+  <canvas
+    id="canvasGeojson"
+    ref="canvasGeojson"
+    :width="this.patchSize"
+    :height="this.patchSize"
+  ></canvas>
   <div class="textbox-container">
     <textarea class="textbox" ref="textbox" v-model="reviewText"></textarea>
   </div>
-  <button id="nextPatchButton" :disabled="isNextPatchDisabled" @click="setupFileInput">
+  <button
+    id="nextPatchButton"
+    ref="nextPatchButton"
+    :disabled="isNextPatchDisabled"
+    :style="{ backgroundColor: isNextPatchDisabled ? '#808080' : '#04aa6d' }"
+    @click="setupFileInput"
+  >
     Prochain patch
   </button>
   <div class="review-button-container">
-    <button :disabled="isAcceptedDisabled" @click="accepter">Accepter</button>
-    <button :disabled="isRefusedDisabled" @click="refuser">Refuser</button>
+    <button @click="accepter">Accepter</button>
+    <button @click="refuser">Refuser</button>
   </div>
-  <div>
-    <progress id="progressPatch" :max="totalNumberOfPatches" :value="numberOfPatches"></progress>
+
+  <div class="progressPatch-container">
+    <div id="patch-bar-label">Patch</div>
+    <progress
+      id="progressPatch"
+      ref="progressPatch"
+      :max="totalNumberOfPatches"
+      :value="totalNumberOfPatches - numberOfPatches"
+    ></progress>
+    <div class="progressPatch-text">
+      {{
+        totalNumberOfPatches === 0
+          ? 0
+          : 100 - ((numberOfPatches / totalNumberOfPatches) * 100).toFixed(0)
+      }}%
+    </div>
   </div>
-  <div>
-    <progress id="progressImage" :max="numImages" :value="idxImage + 1"></progress>
+
+  <div class="progressImage-container">
+    <div id="image-bar-label">Image</div>
+    <progress id="progressImage" :max="numImages" :value="idxImage"></progress>
+    <div class="progressImage-text">
+      {{ ((idxImage / numImages) * 100).toFixed(0) }}%
+    </div>
   </div>
 </template>
 
@@ -129,9 +182,7 @@ export default {
   data() {
     return {
       init: true,
-      isNextPatchDisabled: false,
-      isAcceptedDisabled: true,
-      isRefusedDisabled: true,
+      isNextPatchDisabled: true,
       idxImage: 0,
       totalNumberOfImages: 0,
       numImages: 0,
@@ -168,30 +219,38 @@ export default {
   },
   async mounted() {
     this.fetchNomenclature(this.id);
-    this.$refs.canvasGeojson.width = this.patchSize;
-    this.$refs.canvasGeojson.height = this.patchSize;
-    this.$refs.canvasVector.width = this.patchSize;
-    this.$refs.canvasVector.height = this.patchSize;
     this.loadReview();
     await this.handleImageChange();
   },
   methods: {
-
     async fetchNomenclature(id) {
       try {
-        const response = await axios.get(`http://localhost:5000/gestion/nomenclature/${id}`);
+        const response = await axios.get(
+          `http://localhost:5000/gestion/nomenclature/${id}`
+        );
         await this.fetchStylesByNomenclature(response.data.nomenclature);
       } catch (error) {
-        console.error('Erreur lors de la récupération de la nomenclature:', error);
+        console.error(
+          "Erreur lors de la récupération de la nomenclature:",
+          error
+        );
       }
     },
     async fetchStylesByNomenclature(nomenclatureId) {
       try {
-        const response = await axios.get(`http://localhost:5000/gestion/nomenclature/${nomenclatureId}/styles`);
-        console.log('Styles de la nomenclature:', response.data.styles);
-        this.fields = response.data.styles.map(style => [style.nom, style.couleur]);
+        const response = await axios.get(
+          `http://localhost:5000/gestion/nomenclature/${nomenclatureId}/styles`
+        );
+        console.log("Styles de la nomenclature:", response.data.styles);
+        this.fields = response.data.styles.map((style) => [
+          style.nom,
+          style.couleur,
+        ]);
       } catch (error) {
-        console.error('Erreur lors de la récupération des styles de la nomenclature:', error);
+        console.error(
+          "Erreur lors de la récupération des styles de la nomenclature:",
+          error
+        );
       }
     },
     async loadSegmentationValue() {
@@ -405,9 +464,8 @@ export default {
         return arrayBufferPatch;
       } else {
         if (this.idxImage >= this.images.length - 1) {
+          this.idxImage++;
           this.isNextPatchDisabled = true;
-          this.isAcceptedDisabled = false;
-          this.isRefusedDisabled = false;
           console.log("All images reviewed");
           return;
         } else {
@@ -932,18 +990,112 @@ export default {
     },
   },
 };
-
 </script>
 <style scoped>
+.loading-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border: 2px solid black;
+  padding: 20px;
+  border-radius: 10px;
+  z-index: 100;
+}
+
+.loader {
+  position: relative;
+  margin: auto;
+  border: 20px solid #eaf0f6;
+  border-radius: 50%;
+  border-top: 20px solid #04aa6d;
+  width: 100px;
+  height: 100px;
+  animation: spinner 4s linear infinite;
+}
+
+@keyframes spinner {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  margin-top: 20px;
+  text-align: center;
+}
 #table-container {
+  border-collapse: collapse;
   position: absolute;
-  left: 0;
+  right: 2.5%;
   top: 50%;
   transform: translateY(-50%);
   z-index: 10;
+  overflow-x: auto;
+}
+
+#table-nom {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#table-nom th,
+#table-nom td {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid black;
+  border-bottom: 1px solid #dddddd89;
+}
+
+#table-nom th {
+  color: white;
+  font-weight: lighter;
+  border: 1px solid black;
+  background-color: #04aa6d;
+}
+
+#table-nom tbody tr:last-child td {
+  border: 1px solid black;
+}
+
+#table-nom tbody tr:hover {
+  background-color: #f9f9f949;
+}
+
+#table-nom td:nth-child(3) {
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+}
+
+#image-bar-label {
+  font-size: 1.2vw;
+  position: absolute;
+  left: 21%;
+}
+
+.progressImage-container {
+  border-radius: 15px;
+  height: 2vh;
+  margin-top: 1%;
+  width: 100%;
+  position: relative;
 }
 
 #progressImage {
+  background-color: #333;
+  border-radius: 15px;
+  height: 2vh;
   position: absolute;
   left: 25%;
   right: 50%;
@@ -951,18 +1103,62 @@ export default {
   width: 50%;
 }
 
-#progressPatch {
+.progressImage-text {
   position: absolute;
+  top: 70%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+}
+
+#patch-bar-label {
+  font-size: 1.2vw;
+  position: absolute;
+  left: 21%;
+}
+
+#progressPatch {
+  background-color: #333;
+  border-radius: 15px;
+  height: 2vh;
   left: 25%;
   right: 50%;
   top: 10%;
   width: 50%;
 }
 
+#progressPatch::progress-bar {
+  background-color: #04aa6d;
+}
+
+.progressPatch-container {
+  border-radius: 15px;
+  height: 2vh;
+  margin-top: 4%;
+  width: 100%;
+  position: relative;
+}
+
+progress::-moz-progress-bar {
+  background-color: #04aa6d;
+}
+
+progress::-webkit-progress-value {
+  background: #04aa6d;
+}
+
+.progressPatch-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+}
+
 .textbox-container {
   position: absolute;
-  bottom: 3%;
-  width: 100%;
+  bottom: 10%;
+  width: 98%;
   display: flex;
   justify-content: center;
   padding: 10px;
@@ -977,7 +1173,7 @@ export default {
 
 .review-button-container {
   position: absolute;
-  bottom: 0;
+  bottom: 5%;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -985,19 +1181,39 @@ export default {
   gap: 10px;
 }
 
+.review-button-container button {
+  transition-duration: 0.4s;
+  width: 150px;
+  height: 40px;
+  border: none;
+  border-radius: 5px;
+  background-color: #04aa6d;
+  color: white;
+  font-size: 16px;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  line-height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+}
+
+.review-button-container button:hover {
+  background-color: #048d5e;
+  color: #f0f0f0;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
 #canvasGeojson {
   position: absolute;
   border: 1px solid black;
   position: absolute;
-  top: 20%;
-}
-
-#loading-div {
-  position: absolute;
-  top: 50px;
-  right: 10px;
-  font-size: 16px;
-  color: #333;
+  top: 18.5%;
+  right: 20%;
 }
 
 #previsualisation {
@@ -1007,42 +1223,63 @@ export default {
 }
 
 #nextPatchButton {
+  transition-duration: 0.4s;
+  width: 150px;
+  height: 40px;
+  border: none;
+  border-radius: 5px;
+  background-color: #808080;
+  color: white;
+  font-size: 16px;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  line-height: 40px;
   position: absolute;
-  bottom: 18%;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 7%;
+  left: 80%;
+  transform: translateX(-55%);
   display: flex;
   justify-content: center;
-  gap: 10px;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+  z-index: 10;
 }
 
-#images-menu-container,
+#nextPatchButton:hover {
+  background-color: #048d5e;
+  color: #f0f0f0;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+#images-menu-container {
+  display: none;
+}
+
 #labellisation-container {
   position: absolute;
-  top: 7vh;
-  left: 0;
 
-  width: 100vw;
-  height: 95vh;
-}
-
-#labellisation-container {
-  top: 10vh;
-}
-
-.app {
   width: 100%;
-  height: 80vh;
+  height: 80%;
+}
+
+#app {
+  width: 100%;
+  height: 80%;
   display: flex;
   flex-direction: column;
 }
 
 .app-header {
   padding: 16px;
+  display: none;
 }
 
 .app-body {
-  min-height: 0;
+  width: 100%;
+  height: 90%;
   flex-grow: 1;
   display: flex;
   flex-direction: row;
@@ -1065,7 +1302,8 @@ input[name="range"] {
   transform: rotate(270deg);
 }
 
-.slide-container {
+.slider-container {
+  display: none;
   padding: 24px 16px 24px 16px;
   background-color: white;
   display: flex;
@@ -1083,7 +1321,7 @@ input[name="range"] {
 .canvas-container {
   position: absolute;
   left: 20%;
-  top: 10%;
+  top: 16%;
   /* width: auto;
     height: auto; */
   aspect-ratio: auto;

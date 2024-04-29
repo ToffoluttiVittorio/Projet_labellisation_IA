@@ -153,6 +153,11 @@ export default {
   },
   methods: {
     updateNomCsv() {
+      /**
+       * Updates the name of the CSV file.
+       *
+       * @param {Event} event - The event object triggered by the file input change.
+       */
       const files = event.target.files;
       const file = files[0];
       const reader = new FileReader();
@@ -166,6 +171,11 @@ export default {
     },
 
     processData(csv) {
+      /**
+       * Process the CSV data and populate the fields array.
+       *
+       * @param {string} csv - The CSV data to process.
+       */
       console.log(this.fields);
       const lines = csv.split("\n");
       lines.forEach((line, index) => {
@@ -186,6 +196,13 @@ export default {
     },
 
     async toggleFolder(folder) {
+      /**
+       * Toggles the state of a folder, opening or closing it.
+       * If the folder is closed, it creates a StacLayer for each file in the folder.
+       *
+       * @param {Object} folder - The folder object to toggle.
+       * @returns {Promise<void>} - A promise that resolves when the folder state is toggled.
+       */
       if (!folder.opened) {
         for (let file of folder.files) {
           await this.createStacLayer(file, folder);
@@ -193,10 +210,23 @@ export default {
         folder.opened = true;
       }
     },
+
     removeField(index) {
+      /**
+       * Removes a field from the list of fields.
+       *
+       * @param {number} index - The index of the field to remove.
+       */
       this.fields.splice(index, 1);
     },
+
     getNomenclaturesAndStyles() {
+      /**
+       * Retrieves nomenclatures and styles from the server.
+       * Makes a GET request to "http://localhost:5000/gestion/nomenclatures" endpoint.
+       * Updates the component's "nomenclatures" data property with the response data.
+       * Logs an error message if there is an error during the request.
+       */
       axios
         .get("http://localhost:5000/gestion/nomenclatures")
         .then((response) => {
@@ -209,7 +239,12 @@ export default {
           );
         });
     },
+
     getStyles(event) {
+      /**
+       * Retrieves the styles based on the selected nomenclature.
+       * @param {Event} event - The event object triggered by the selection change.
+       */
       const selectedNomenclatureId = event.target.value;
       const selectedNomenclature = this.nomenclatures.find(
         (nomenclature) => nomenclature.id === parseInt(selectedNomenclatureId)
@@ -225,6 +260,12 @@ export default {
     },
 
     handleCreaNomSubmit() {
+      /**
+       * Handles the submission of the form for creating a new name.
+       * If the text content or button color is empty, the method returns early.
+       * Otherwise, it adds a new entry to the 'fields' array with the provided text content and button color.
+       * Finally, it resets the text content and button color to empty values.
+       */
       if (this.textContent == "" || this.buttonColor == "") {
         return;
       }
@@ -246,14 +287,27 @@ export default {
           );
         });
     },
+
     saveProject() {
+      /**
+       * Saves the project.
+       *
+       * This method sets the z-index and opacity of the save container to make it visible.
+       */
       const saveContainer = document.querySelector(".save-container");
       if (saveContainer) {
         saveContainer.style.zIndex = 100;
         saveContainer.style.opacity = 1;
       }
     },
+
     loadFiles(file, folder) {
+      /**
+       * Loads a file into the specified folder.
+       *
+       * @param {Object} file - The file object to be loaded.
+       * @param {Object} folder - The folder object where the file will be added.
+       */
       try {
         folder.files.push({
           href: file.href,
@@ -263,7 +317,14 @@ export default {
         console.error("Error loading files:", error);
       }
     },
+
     loadFolder(elem, parentFolder) {
+      /**
+       * Loads a folder from the provided element and adds it to the parent folder.
+       *
+       * @param {Object} elem - The element representing the folder to load.
+       * @param {Object} parentFolder - The parent folder to add the loaded folder to.
+       */
       try {
         let index = new STAC.Index();
         index.initialize(elem.href);
@@ -291,7 +352,14 @@ export default {
         console.error("Error loading folder:", error);
       }
     },
+
     loadStac() {
+      /**
+       * Loads the STAC (SpatioTemporal Asset Catalog) data from the specified URL.
+       * Populates the component's `folders` array with the retrieved data.
+       *
+       * @throws {Error} If there is an error loading the STAC data.
+       */
       this.folders = [];
       try {
         let index = new STAC.Index();
@@ -319,7 +387,13 @@ export default {
         console.error("Error loading STAC:", error);
       }
     },
+
     async updateMap(file) {
+      /**
+       * Updates the map with the given file.
+       * @param {Object} file - The file object to update the map with.
+       * @returns {Promise<void>} - A promise that resolves when the map is updated.
+       */
       let panAssetHref = await this.getPanAssetHref(file.href);
       if (file.checked) {
         let stac = new STACLayer({ url: file.href });
@@ -337,10 +411,25 @@ export default {
         }
       }
     },
+
     intersectsCoordinate(extent, coordinate) {
+      /**
+       * Checks if a given coordinate intersects with a given extent.
+       *
+       * @param {Array<number>} extent - The extent to check against.
+       * @param {Array<number>} coordinate - The coordinate to check.
+       * @returns {boolean} - True if the coordinate intersects with the extent, false otherwise.
+       */
       return containsCoordinate(extent, coordinate);
     },
+
     async createStacLayer(file, folder) {
+      /**
+       * Creates a STAC layer using the provided file and folder.
+       * @param {Object} file - The file object containing the href property.
+       * @param {string} folder - The folder name.
+       * @returns {Promise<void>} - A promise that resolves when the STAC layer is created.
+       */
       let panAssetHref = await this.getPanAssetHref(file.href);
       let stac = new STACLayer({ url: file.href });
       stac.boundsStyle_.stroke_.color_ = "#3399CC";
@@ -354,7 +443,14 @@ export default {
         });
       });
     },
+
     async removeStacLayer(file) {
+      /**
+       * Removes a STAC layer from the map.
+       *
+       * @param {Object} file - The file object representing the STAC layer to be removed.
+       * @returns {Promise<void>} - A promise that resolves when the layer is successfully removed.
+       */
       let panAssetHref = await this.getPanAssetHref(file.href);
       let stac = this.layers[panAssetHref];
       if (stac) {
@@ -364,6 +460,13 @@ export default {
     },
 
     async selectStacLayer(stac, folder) {
+      /**
+       * Selects a STAC layer and updates the map accordingly.
+       *
+       * @param {Object} stac - The selected STAC layer.
+       * @param {Object} folder - The folder containing the STAC layer files.
+       * @returns {void}
+       */
       let fileUrl = stac.getData()._url;
       // let panAssetHref = await this.getPanAssetHref(fileUrl);
       // console.log("Selected STACLayer:", stac);
@@ -380,6 +483,15 @@ export default {
     },
 
     async getPanAssetHref(url) {
+      /**
+       * Retrieves the href of a PAN asset from a given URL.
+       * If the response contains a 'pan' asset, the href of that asset is returned.
+       * Otherwise, the href of the first asset in the response is returned.
+       *
+       * @param {string} url - The URL to fetch the asset from.
+       * @returns {string} The href of the PAN asset or the first asset in the response.
+       * @throws {Error} If there was an error fetching the asset.
+       */
       try {
         const response = await axios.get(url);
         const assets = response.data.assets;
@@ -389,7 +501,24 @@ export default {
         throw error;
       }
     },
+
     saveChantier() {
+      /**
+       * Saves the chantier (project) by sending HTTP requests to create nomenclature, chantier, and image_sortie.
+       *
+       * Steps:
+       * 1. Retrieves the user_id from the session storage.
+       * 2. Finds the annotateur and reviewer based on their usernames.
+       * 3. Checks if the clicked flag is true or if annotateur or reviewer is not selected. If so, returns without performing any action.
+       * 4. Sets the clicked flag to true.
+       * 5. Creates a project object with the selected layers.
+       * 6. Sends a POST request to create the nomenclature.
+       * 7. Retrieves the nomenclatureId from the response.
+       * 8. Sends a POST request to create the chantier.
+       * 9. For each layer in the project, sends a POST request to create an image_sortie.
+       * 10. Once all the axios requests are completed, changes the route to "labellisation" with the chantier id as a parameter.
+       * 11. Handles any errors that occur during the process.
+       */
       const user_id = sessionStorage.getItem("user_id");
       const annotateur = this.users.find(
         (user) => user.username === this.labelliser
