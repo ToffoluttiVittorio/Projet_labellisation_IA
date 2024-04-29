@@ -1,12 +1,12 @@
 name: Test docker bdd
 
 on:
-    push:
-        branches:
-          - '*'
-    pull_request:
-        branches:
-          - '*'
+  push:
+    branches:
+      - "*"
+  pull_request:
+    branches:
+      - "*"
 
 jobs:
   test_bdd:
@@ -30,17 +30,16 @@ jobs:
 
       - name: Check inserted data
         run: |
-            RESULT=$(docker exec postgis_data psql -U postgres -d data -tAc "SELECT COUNT(*) FROM chantier;")
-            echo "Query result: $RESULT"
-            COUNT=$(echo "$RESULT" | awk '{print $1}')
-            echo "Row count: $COUNT"
-            if [ "$COUNT" -ge 1 ]; then
-              echo "Test passed: At least one row found in the chantier table."
-            else
-              echo "Test failed: No rows found in the chantier table."
-              exit 1
-            fi
-  
+          RESULT=$(docker exec postgis_data psql -U postgres -d data -tAc "SELECT COUNT(*) FROM chantier;")
+          echo "Query result: $RESULT"
+          COUNT=$(echo "$RESULT" | awk '{print $1}')
+          echo "Row count: $COUNT"
+          if [ "$COUNT" -ge 1 ]; then
+            echo "Test passed: At least one row found in the chantier table."
+          else
+            echo "Test failed: No rows found in the chantier table."
+            exit 1
+          fi
 
   test_vitest_js:
     runs-on: ubuntu-latest
@@ -49,13 +48,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-    #   - name: Setup Node
-    #     uses: actions/setup-node@v4
+      #   - name: Setup Node
+      #     uses: actions/setup-node@v4
 
       - name: Install dependencies
         run: npm install
-        working-directory: inlab/
+        working-directory: dev/inlab/
 
       - name: Run Vitest
         run: npm run test
-        working-directory: inlab/
+        working-directory: dev/inlab/

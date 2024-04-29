@@ -1321,7 +1321,7 @@ input[name="range"] {
 .canvas-container {
   position: absolute;
   left: 20%;
-  top: 16%;
+  top: 12%;
   /* width: auto;
     height: auto; */
   aspect-ratio: auto;
