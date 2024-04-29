@@ -1,11 +1,9 @@
 <template>
-
   <nav class="navbar">
     <router-link to="/" class="link">Accueil</router-link>
     <router-link to="/map" class="link">Carte</router-link>
     <router-link to="/login" class="auth-link">Login</router-link>
   </nav>
-
 </template>
 
 <script>
@@ -19,7 +17,7 @@ export default {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100vw;
+  width: 100%;
   height: 5vh;
 
   background-color: black;

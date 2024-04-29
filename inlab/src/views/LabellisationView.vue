@@ -1,21 +1,37 @@
 <template>
   <div id="images-menu-container">
-    <select v-model="selectedImage" @change="handleImageChange">
+    <select
+      class="select-menu"
+      v-model="selectedImage"
+      @change="handleImageChange"
+    >
       <option value="">Sélectionner une image</option>
       <option v-for="image in images" :key="image.id" :value="image">
         {{ image.name }}
       </option>
     </select>
   </div>
-  <div id="loading-div" v-if="isLoading">Loading GeoTIFF...</div>
-
+  <div class="loading-container" v-if="isLoading">
+    <div class="loader"></div>
+    <div class="loading-text">Chargement du geotiff...</div>
+  </div>
 
   <div id="labellisation-container">
     <div class="app" id="app">
       <div class="app-header">
-        <input type="range" min="0" max="1" step="0.01" value="0.2" id="sliderOpacity" @input="updateOpacity" />
-        <button @click="exportImage">exporter</button>
-        <button @click="vectorize">vectorize</button>
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value="0.2"
+          id="sliderOpacity"
+          @input="updateOpacity"
+        />
+        <button class="export" @click="exportImage">exporter</button>
+        <button class="enregistrer" @click="vectorize">
+          Enregistrer le patch
+        </button>
       </div>
 
       <div id="table-container">
@@ -28,10 +44,14 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(field, index) in fields" :key="index" @click="updateClassColorAndName(field[0], field[1])">
+            <tr
+              v-for="(field, index) in fields"
+              :key="index"
+              @click="updateClassColorAndName(field[0], field[1])"
+            >
               <td>{{ index + 1 }}</td>
-              <td :class="{ 'selected': index === 0 }">{{ field[0] }}</td>
-              <td :style="{ backgroundColor: field[1] }"> </td>
+              <td :class="{ selected: index === 0 }">{{ field[0] }}</td>
+              <td :style="{ backgroundColor: field[1] }"></td>
             </tr>
           </tbody>
         </table>
@@ -46,24 +66,41 @@
 
       <div class="app-body">
         <div class="slide-container">
-          <input type="range" min="0" max="1" value="0" step="any" class="slider" id="slider" list="markers"
-            v-model="sliderValue" />
+          <input
+            type="range"
+            min="0"
+            max="1"
+            value="0"
+            step="any"
+            class="slider"
+            id="slider"
+            list="markers"
+            v-model="sliderValue"
+          />
           <div class="slider-values">
             {{ parseFloat(sliderValue).toFixed(2) }}
           </div>
         </div>
         <div class="canvas-container">
           <canvas class="canvas" id="canvas" ref="canvas"></canvas>
-          <canvas class="canvas" id="canvasVector" ref="canvasVector"></canvas>
+          <canvas
+            class="canvas"
+            id="canvasVector"
+            ref="canvasVector"
+            :width="this.patchSize"
+            :height="this.patchSize"
+          ></canvas>
         </div>
       </div>
     </div>
-
   </div>
 
-
-  <canvas id="previsualisation" ref="canvasPrevisu"></canvas>
-
+  <canvas
+    id="previsualisation"
+    ref="canvasPrevisu"
+    width="300"
+    height="300"
+  ></canvas>
 </template>
 
 <script>
@@ -131,7 +168,7 @@ export default {
         features: [],
       },
       className: null,
-      classColor: '',
+      classColor: "",
       varFill: null,
       images: [],
       selectedImage: "",
@@ -152,15 +189,13 @@ export default {
     this.fetchNomenclature(this.id);
   },
   methods: {
-
     updateClassColorAndName(className, classColor) {
-
-      const selectedCells = document.querySelectorAll('.selected');
-      selectedCells.forEach(cell => {
-        cell.classList.remove('selected');
+      const selectedCells = document.querySelectorAll(".selected");
+      selectedCells.forEach((cell) => {
+        cell.classList.remove("selected");
       });
 
-      event.target.classList.add('selected');
+      event.target.classList.add("selected");
 
       this.className = className;
       this.classColor = classColor;
@@ -168,20 +203,33 @@ export default {
 
     async fetchNomenclature(id) {
       try {
-        const response = await axios.get(`http://localhost:5000/gestion/nomenclature/${id}`);
+        const response = await axios.get(
+          `http://localhost:5000/gestion/nomenclature/${id}`
+        );
         await this.fetchStylesByNomenclature(response.data.nomenclature);
       } catch (error) {
-        console.error('Erreur lors de la récupération de la nomenclature:', error);
+        console.error(
+          "Erreur lors de la récupération de la nomenclature:",
+          error
+        );
       }
     },
     async fetchStylesByNomenclature(nomenclatureId) {
       try {
-        const response = await axios.get(`http://localhost:5000/gestion/nomenclature/${nomenclatureId}/styles`);
-        this.fields = response.data.styles.map(style => [style.nom, style.couleur]);
+        const response = await axios.get(
+          `http://localhost:5000/gestion/nomenclature/${nomenclatureId}/styles`
+        );
+        this.fields = response.data.styles.map((style) => [
+          style.nom,
+          style.couleur,
+        ]);
         this.className = response.data.styles[0].couleur;
         this.classColor = response.data.styles[0].couleur;
       } catch (error) {
-        console.error('Erreur lors de la récupération des styles de la nomenclature:', error);
+        console.error(
+          "Erreur lors de la récupération des styles de la nomenclature:",
+          error
+        );
       }
     },
 
@@ -267,9 +315,8 @@ export default {
       this.numPatchesY = Math.ceil(imageHeight / this.patchSize);
 
       const canvas = this.$refs.canvasPrevisu;
-      canvas.width = 300;
-      canvas.height = 300;
       const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       const rectWidth = canvas.width / this.numPatchesX;
       const rectHeight = canvas.height / this.numPatchesY;
@@ -419,8 +466,6 @@ export default {
         this.varFill = this.fillRegion(labels, neighboringRegions);
         this.$refs.canvasVector.addEventListener("click", this.varFill);
       }
-
-
     },
 
     convertToGeographicCoords(x, y) {
@@ -566,7 +611,6 @@ export default {
 
       return neighborsMap;
     },
-
 
     traversePixelsInOrder(neighborsMap, width) {
       const visited = new Set();
@@ -735,7 +779,7 @@ export default {
         geometry: outerPolygon,
         properties: {
           class_name: this.className,
-          class_color: this.classColor
+          class_color: this.classColor,
         },
       });
 
@@ -770,7 +814,7 @@ export default {
         geometry: outerPolygon,
         properties: {
           class_name: this.className,
-          class_color: this.classColor
+          class_color: this.classColor,
         },
       });
     },
@@ -874,6 +918,121 @@ export default {
 </script>
 
 <style>
+.export {
+  display: none;
+}
+::selection {
+  background: #04aa6d;
+  color: white;
+}
+::-moz-selection {
+  background: #04aa6d;
+  color: white;
+}
+.select-menu {
+  width: 90vw;
+  padding: 4px;
+  font-size: 1.2em;
+  border: none;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  border: 1px solid #04aa6d;
+}
+.loading-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border: 2px solid black;
+  padding: 20px;
+  border-radius: 10px;
+  z-index: 100;
+}
+
+.loader {
+  position: relative;
+  margin: auto;
+  border: 20px solid #eaf0f6;
+  border-radius: 50%;
+  border-top: 20px solid #04aa6d;
+  width: 100px;
+  height: 100px;
+  animation: spinner 4s linear infinite;
+}
+
+@keyframes spinner {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  margin-top: 20px;
+  text-align: center;
+}
+
+/* Firefox */
+input[type="range"]::-moz-range-progress {
+  background: #04aa6d;
+}
+
+input[type="range"]::-moz-range-track {
+  background: #ccc;
+}
+#table-container {
+  border-collapse: collapse;
+  position: absolute;
+  right: 2.5%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  overflow-x: auto;
+}
+
+#table-nom {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#table-nom th,
+#table-nom td {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid black;
+  border-bottom: 1px solid #dddddd89;
+}
+
+#table-nom th {
+  color: white;
+  font-weight: lighter;
+  border: 1px solid black;
+  background-color: #04aa6d;
+}
+
+#table-nom tbody tr:last-child td {
+  border: 1px solid black;
+}
+
+#table-nom tbody tr:hover {
+  background-color: #f9f9f949;
+}
+
+#table-nom td:nth-child(3) {
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+}
+
 .selected {
   background-color: yellow;
 }
@@ -887,42 +1046,66 @@ export default {
 }
 
 #previsualisation {
-  position: fixed;
-  top: 70vh;
-  left: 70vw;
-
-  max-width: 30vw;
-  max-height: 30vh;
+  position: absolute;
+  top: 5vh;
+  left: 0vw;
 }
 
-/* div.button-container {
+div.button-container {
   position: absolute;
-  bottom: 0;
+  bottom: 18%;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   justify-content: center;
   gap: 10px;
-} */
+}
 
-#images-menu-container,
+.button-container button {
+  padding: 10px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  background-color: #04aa6d;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+}
+
+.button-container button:disabled {
+  background-color: #cccccc;
+  color: black;
+}
+
+#images-menu-container {
+  width: 10vw;
+  position: absolute;
+  top: 7vh;
+  left: 47%;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 #labellisation-container {
   position: absolute;
   top: 7vh;
   left: 0;
 
   width: 100vw;
-  height: 95vh;
+  height: 90vh;
 }
-
-
-#labellisation-container {
-  top: 10vh;
-}
-
 
 .app {
-  height: 100%;
+  height: 80%;
   display: flex;
   flex-direction: column;
 }
@@ -931,15 +1114,38 @@ export default {
   padding: 16px;
 }
 
+.app-header .enregistrer {
+  position: absolute;
+  top: 85%;
+  left: 45.8%;
+  padding: 10px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  background-color: #04aa6d;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+}
+
 .app-body {
-  min-height: 0;
+  position: absolute;
+  width: 100%;
+  height: 50%;
   flex-grow: 1;
   display: flex;
   flex-direction: row;
 }
 
 input#slider.slider {
-  width: 300px;
+  width: 30vh;
 }
 
 input[name="range"] {
@@ -955,8 +1161,10 @@ input[name="range"] {
 }
 
 .slide-container {
-  padding: 24px 16px 24px 16px;
-  background-color: white;
+  z-index: 100;
+  position: absolute;
+  top: 70%;
+  left: 25%;
   display: flex;
   flex-direction: row;
   transform: rotate(270deg);
@@ -967,6 +1175,7 @@ input[name="range"] {
   flex-direction: column;
   justify-content: space-between;
   margin-left: 4px;
+  transform: rotate(90deg);
 }
 
 .slider-value {
@@ -975,14 +1184,13 @@ input[name="range"] {
 }
 
 .canvas-container {
-  /* width: auto;
-    height: auto; */
   aspect-ratio: auto;
   display: flex;
   justify-content: center;
   background-color: black;
-
-  position: relative;
+  top: 18%;
+  left: 37%;
+  position: absolute;
 }
 
 .canvas {
@@ -996,10 +1204,14 @@ input[name="range"] {
 }
 
 #sliderOpacity {
-  width: 100px;
+  z-index: 20;
+  position: absolute;
+  top: 35%;
+  right: 2%;
+  width: 15vw;
   -webkit-appearance: none;
   appearance: none;
-  height: 10px;
+  height: 1.2vh;
   background: #d3d3d3;
   outline: none;
   opacity: 0.7;
