@@ -43,7 +43,8 @@ export default {
   name: "Map",
   mounted() {
     const stac = new STACLayer({
-      url: "https://s3.us-west-2.amazonaws.com/sentinel-cogs/sentinel-s2-l2a-cogs/10/T/ES/2022/7/S2A_10TES_20220726_0_L2A/S2A_10TES_20220726_0_L2A.json",
+      // url: "https://s3.us-west-2.amazonaws.com/sentinel-cogs/sentinel-s2-l2a-cogs/10/T/ES/2022/7/S2A_10TES_20220726_0_L2A/S2A_10TES_20220726_0_L2A.json",
+      url: "http://127.0.0.1:8081/stac/D007_2020_RVB/007_2020_AA_S1_14/007_2020_AA_S1_14.json",
     });
 
     this.map = new Map({

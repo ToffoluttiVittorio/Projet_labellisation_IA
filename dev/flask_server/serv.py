@@ -436,7 +436,12 @@ def delete_chantier():
     if chantier_id:
         images = Image_sortie.query.filter_by(id_chantier=chantier_id).all()
         for image in images:
-            db.session.delete(image)
+            patches = Patch.query.filter_by(id_img_sortie=image.id).all()
+            for patch in patches:
+                db.session.delete(patch)
+            db.session.commit()
+        db.session.delete(image)
+        db.session.commit()
        
         chantier = Chantier.query.get(chantier_id)
         if chantier:

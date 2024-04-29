@@ -220,7 +220,6 @@ export default {
         for (let file of folder.files) {
           await this.createStacLayer(file, folder);
           let panAssetHref = await this.getPanAssetHref(file.href);
-          console.log(this.layers[panAssetHref]);
         }
         folder.opened = true;
       }
@@ -355,7 +354,7 @@ export default {
         let children = rootNode.entry.links.filter(
           (link) => link.rel === "item" || link.rel === "child"
         );
-        console.log(children);
+        // console.log(children);
         for (let child of children) {
           if (child.rel === "item") {
             this.loadFiles(child, folder);
@@ -412,12 +411,13 @@ export default {
       let panAssetHref = await this.getPanAssetHref(file.href);
       if (file.checked) {
         let stac = new STACLayer({ url: file.href });
+        console.log(stac);
         stac.boundsStyle_.stroke_.color_ = "#FF0000";
         this.selectedLayers[panAssetHref] = stac;
         this.map.map.addLayer(stac);
-        // stac.on("sourceready", () => {
-        //   this.map.map.getView().fit(stac.getExtent());
-        // });
+        stac.on("sourceready", () => {
+          this.map.map.getView().fit(stac.getExtent());
+        });
       } else {
         let stac = this.selectedLayers[panAssetHref];
         if (stac) {
@@ -453,8 +453,6 @@ export default {
       stac.on("sourceready", () => {
         this.map.map.on("click", (event) => {
           if (this.intersectsCoordinate(stac.getExtent(), event.coordinate)) {
-            console.log(stac);
-            console.log(stac.getExtent());
             this.selectStacLayer(stac, folder);
           }
         });
