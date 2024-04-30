@@ -68,7 +68,12 @@ cd /dev//flask_server
 python serv.py
 ```
 
-### Étape 6 : Ouvrir l'Application
+### Étape 6 : Lancer et ouvrir l'Application
+
+```bash
+cd /dev/inlab
+npm rundev
+```
 
 Enfin, ouvrez l'application dans Firefox à l'adresse `http://localhost:5173`. Note : Il peut y avoir des problèmes lors de l'utilisation de Chrome.
 
