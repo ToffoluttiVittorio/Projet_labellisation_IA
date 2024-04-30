@@ -8,7 +8,10 @@ Ce projet est réalisé par des élèves de l'ENSG (Ecole nationale des sciences
 
 ## Démo
 
-vidéo
+
+https://github.com/ToffoluttiVittorio/Projet_labellisation_IA/assets/61098254/ea886551-967e-4e82-b7e4-5f46c259413e
+
+
 
 ## Contributeurs
 
