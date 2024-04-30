@@ -72,7 +72,7 @@ python serv.py
 
 ```bash
 cd /dev/inlab
-npm rundev
+npm run dev
 ```
 
 Enfin, ouvrez l'application dans Firefox à l'adresse `http://localhost:5173`. Note : Il peut y avoir des problèmes lors de l'utilisation de Chrome.
